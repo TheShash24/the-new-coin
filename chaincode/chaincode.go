@@ -39,12 +39,13 @@ const (
 
 // txTypes — M2 fix: ESCROW and REFUND added
 const (
-	TxTypeMint     = "MINT"
-	TxTypeTransfer = "TRANSFER"
-	TxTypePayment  = "PAYMENT"
-	TxTypeEscrow   = "ESCROW"
-	TxTypeBurn     = "BURN"
-	TxTypeRefund   = "REFUND"
+	TxTypeMint      = "MINT"
+	TxTypeTransfer  = "TRANSFER"
+	TxTypePayment   = "PAYMENT"
+	TxTypeEscrow    = "ESCROW"
+	TxTypeBurn      = "BURN"
+	TxTypeRefund    = "REFUND"
+	TxTypeFeeClaim  = "FEE_CLAIM"
 )
 
 const (
@@ -63,6 +64,7 @@ const (
 const (
 	SystemEscrow = "SYSTEM_ESCROW"
 	CBOSWalletID = "CBOS_WALLET"
+	FeePool      = "FEE_POOL"
 )
 
 // Fee policy: 10 basis points (0.10%), minimum 1 token
@@ -378,8 +380,8 @@ func (s *SmartContract) RegisterWallet(ctx contractapi.TransactionContextInterfa
 	if err := requireOrg1OrOrg2(ctx); err != nil {
 		return err
 	}
-	if role != RoleDiaspora && role != RoleRelative && role != RoleVendor && role != RoleCBOS {
-		return fmt.Errorf("invalid role %q: must be DIASPORA, RELATIVE, VENDOR, or CBOS", role)
+	if role != RoleDiaspora && role != RoleRelative && role != RoleVendor {
+		return fmt.Errorf("invalid role %q: must be DIASPORA, RELATIVE, or VENDOR", role)
 	}
 	if kycTier < 1 || kycTier > 3 {
 		return fmt.Errorf("invalid kycTier %d: must be 1, 2, or 3", kycTier)
@@ -452,6 +454,12 @@ func (s *SmartContract) MintTokens(ctx contractapi.TransactionContextInterface, 
 	if err != nil {
 		return err
 	}
+	if w.Role != RoleDiaspora {
+		return fmt.Errorf("tokens can only be minted to a DIASPORA wallet")
+	}
+	if w.Frozen {
+		return fmt.Errorf("wallet %s is frozen", walletID)
+	}
 	ts, err := getTxTimestamp(ctx)
 	if err != nil {
 		return err
@@ -499,6 +507,9 @@ func (s *SmartContract) Transfer(ctx contractapi.TransactionContextInterface, fr
 	if amount <= 0 {
 		return fmt.Errorf("amount must be positive")
 	}
+	if fromID == toID {
+		return fmt.Errorf("fromID and toID cannot be the same wallet")
+	}
 	fromWallet, err := loadWallet(ctx, fromID)
 	if err != nil {
 		return err
@@ -528,6 +539,21 @@ func (s *SmartContract) Transfer(ctx contractapi.TransactionContextInterface, fr
 	// M1 fix: check recipient frozen status
 	if toWallet.Frozen {
 		return fmt.Errorf("recipient wallet %s is frozen", toID)
+	}
+	// KYC tier enforcement
+	switch fromWallet.KYCTier {
+	case 1:
+		if amount > KYCTier1MaxAmount {
+			return fmt.Errorf("KYC tier 1 limit exceeded: max %d tokens per transaction", KYCTier1MaxAmount)
+		}
+	case 2:
+		if amount > KYCTier2MaxAmount {
+			return fmt.Errorf("KYC tier 2 limit exceeded: max %d tokens per transaction", KYCTier2MaxAmount)
+		}
+	case 3:
+		// no limit
+	default:
+		return fmt.Errorf("invalid KYC tier %d on wallet %s", fromWallet.KYCTier, fromID)
 	}
 	fee := calculateFee(amount)
 	// M3 fix: integer overflow check
@@ -588,6 +614,9 @@ func (s *SmartContract) PayVendor(ctx contractapi.TransactionContextInterface, f
 	}
 	if amount <= 0 {
 		return fmt.Errorf("amount must be positive")
+	}
+	if fromID == toID {
+		return fmt.Errorf("fromID and toID cannot be the same wallet")
 	}
 	fromWallet, err := loadWallet(ctx, fromID)
 	if err != nil {
@@ -1008,12 +1037,12 @@ func (s *SmartContract) ClaimCBOSFees(ctx contractapi.TransactionContextInterfac
 		Amount:       totalFees,
 		DocType:      DocTypeTransaction,
 		Fee:          0,
-		From:         "FEE_POOL",
+		From:         FeePool,
 		Participants: []string{cbosWalletID},
 		Timestamp:    ts,
 		To:           cbosWalletID,
 		TxID:         txID,
-		TxType:       TxTypeTransfer,
+		TxType:       TxTypeFeeClaim,
 	}
 	return saveTx(ctx, tx)
 }
