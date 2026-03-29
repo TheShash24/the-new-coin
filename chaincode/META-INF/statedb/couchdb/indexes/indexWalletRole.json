@@ -1,0 +1,8 @@
+{
+  "index": {
+    "fields": ["docType", "role"]
+  },
+  "ddoc": "indexWalletRole",
+  "name": "indexWalletRole",
+  "type": "json"
+}
