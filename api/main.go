@@ -23,7 +23,7 @@ func main() {
 		{
 			OrgName:      "Org1",
 			MSPID:        "Org1MSP",
-			CertPath:     filepath.Join(orgsBase, "org1.example.com", "users", "Admin@org1.example.com", "msp", "signcerts", "Admin@org1.example.com-cert.pem"),
+			CertPath:     filepath.Join(orgsBase, "org1.example.com", "users", "Admin@org1.example.com", "msp", "signcerts", "cert.pem"),
 			KeyPath:      filepath.Join(orgsBase, "org1.example.com", "users", "Admin@org1.example.com", "msp", "keystore"),
 			TLSCertPath:  filepath.Join(orgsBase, "org1.example.com", "peers", "peer0.org1.example.com", "tls", "ca.crt"),
 			PeerEndpoint: "dns:///localhost:7051",
@@ -32,7 +32,7 @@ func main() {
 		{
 			OrgName:      "Org2",
 			MSPID:        "Org2MSP",
-			CertPath:     filepath.Join(orgsBase, "org2.example.com", "users", "Admin@org2.example.com", "msp", "signcerts", "Admin@org2.example.com-cert.pem"),
+			CertPath:     filepath.Join(orgsBase, "org2.example.com", "users", "Admin@org2.example.com", "msp", "signcerts", "cert.pem"),
 			KeyPath:      filepath.Join(orgsBase, "org2.example.com", "users", "Admin@org2.example.com", "msp", "keystore"),
 			TLSCertPath:  filepath.Join(orgsBase, "org2.example.com", "peers", "peer0.org2.example.com", "tls", "ca.crt"),
 			PeerEndpoint: "dns:///localhost:9051",
@@ -41,7 +41,7 @@ func main() {
 		{
 			OrgName:      "Org3",
 			MSPID:        "Org3MSP",
-			CertPath:     filepath.Join(orgsBase, "org3.example.com", "users", "Admin@org3.example.com", "msp", "signcerts", "Admin@org3.example.com-cert.pem"),
+			CertPath:     filepath.Join(orgsBase, "org3.example.com", "users", "Admin@org3.example.com", "msp", "signcerts", "cert.pem"),
 			KeyPath:      filepath.Join(orgsBase, "org3.example.com", "users", "Admin@org3.example.com", "msp", "keystore"),
 			TLSCertPath:  filepath.Join(orgsBase, "org3.example.com", "peers", "peer0.org3.example.com", "tls", "ca.crt"),
 			PeerEndpoint: "dns:///localhost:11051",
