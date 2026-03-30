@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Diaspora Remittance Platform</title>
+  <link rel="stylesheet" href="shared.css">
+  <style>
+    body {
+      background: linear-gradient(135deg, #1a1a2e 0%, #16213e 60%, #0f3460 100%);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+    }
+
+    .login-container {
+      width: 100%;
+      max-width: 520px;
+    }
+
+    .login-header {
+      text-align: center;
+      margin-bottom: 36px;
+    }
+
+    .login-header .globe { font-size: 3rem; margin-bottom: 12px; display: block; }
+
+    .login-header h1 {
+      color: #fff;
+      font-size: 1.75rem;
+      font-weight: 700;
+      margin-bottom: 6px;
+    }
+
+    .login-header p {
+      color: rgba(255,255,255,.55);
+      font-size: .9375rem;
+    }
+
+    .login-header .network-badge {
+      display: inline-block;
+      background: rgba(255,255,255,.1);
+      border: 1px solid rgba(255,255,255,.2);
+      border-radius: 20px;
+      color: rgba(255,255,255,.7);
+      font-size: .75rem;
+      font-weight: 500;
+      margin-top: 10px;
+      padding: 4px 14px;
+    }
+
+    .role-prompt {
+      color: rgba(255,255,255,.6);
+      font-size: .8125rem;
+      font-weight: 500;
+      letter-spacing: .5px;
+      text-transform: uppercase;
+      margin-bottom: 14px;
+      text-align: center;
+    }
+
+    .role-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+    }
+
+    .role-card {
+      background: rgba(255,255,255,.07);
+      border: 1.5px solid rgba(255,255,255,.12);
+      border-radius: 14px;
+      cursor: pointer;
+      padding: 22px 18px;
+      text-align: left;
+      transition: background .15s, border-color .15s, transform .15s;
+      text-decoration: none;
+    }
+
+    .role-card:hover {
+      background: rgba(255,255,255,.13);
+      border-color: rgba(255,255,255,.25);
+      transform: translateY(-2px);
+    }
+
+    .role-icon { font-size: 1.75rem; margin-bottom: 10px; display: block; }
+
+    .role-name {
+      color: #fff;
+      font-size: 1rem;
+      font-weight: 700;
+      margin-bottom: 4px;
+    }
+
+    .role-desc {
+      color: rgba(255,255,255,.55);
+      font-size: .8125rem;
+      line-height: 1.4;
+      margin-bottom: 10px;
+    }
+
+    .role-org {
+      display: inline-block;
+      border-radius: 10px;
+      font-size: .7rem;
+      font-weight: 600;
+      padding: 2px 9px;
+      text-transform: uppercase;
+      letter-spacing: .3px;
+    }
+
+    .role-card.bank-a  { border-top: 3px solid var(--bank-a); }
+    .role-card.bank-a .role-org { background: rgba(26,115,232,.25); color: #93c5fd; }
+
+    .role-card.bank-b  { border-top: 3px solid var(--bank-b); }
+    .role-card.bank-b .role-org { background: rgba(11,128,67,.25); color: #6ee7b7; }
+
+    .role-card.cbos    { border-top: 3px solid var(--cbos); }
+    .role-card.cbos .role-org  { background: rgba(198,40,40,.25);  color: #fca5a5; }
+
+    .login-footer {
+      color: rgba(255,255,255,.25);
+      font-size: .75rem;
+      margin-top: 28px;
+      text-align: center;
+    }
+
+    .login-footer a {
+      color: rgba(255,255,255,.4);
+      text-decoration: underline;
+    }
+
+    @media (max-width: 480px) {
+      .role-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="login-container">
+  <div class="login-header">
+    <span class="globe">🌍</span>
+    <h1>Diaspora Remittance Platform</h1>
+    <p>Blockchain-based remittances for Sudan</p>
+    <span class="network-badge">Hyperledger Fabric 2.5 · Prototype</span>
+  </div>
+
+  <p class="role-prompt">I am a&hellip;</p>
+
+  <div class="role-grid">
+    <a class="role-card bank-a" href="sender.html">
+      <span class="role-icon">✈️</span>
+      <div class="role-name">Diaspora Sender</div>
+      <div class="role-desc">Send money home from the UK. Mint-backed deposit tokens.</div>
+      <span class="role-org">Bank A · Org1</span>
+    </a>
+
+    <a class="role-card bank-b" href="recipient.html">
+      <span class="role-icon">🏠</span>
+      <div class="role-name">Recipient</div>
+      <div class="role-desc">Receive funds in Sudan and pay local vendors.</div>
+      <span class="role-org">Bank B · Org2</span>
+    </a>
+
+    <a class="role-card bank-b" href="vendor.html">
+      <span class="role-icon">🏪</span>
+      <div class="role-name">Vendor</div>
+      <div class="role-desc">Accept payments and request foreign exchange release.</div>
+      <span class="role-org">Bank B · Org2</span>
+    </a>
+
+    <a class="role-card cbos" href="cbos.html">
+      <span class="role-icon">🏛️</span>
+      <div class="role-name">CBOS Regulator</div>
+      <div class="role-desc">Central Bank of Sudan — supervise flows, approve burns, monitor AML.</div>
+      <span class="role-org">CBOS · Org3</span>
+    </a>
+  </div>
+
+  <p class="login-footer">
+    Master's thesis prototype &mdash; no real authentication &mdash;
+    <a href="admin.html?admin=true">Admin Setup</a>
+  </p>
+</div>
+
+</body>
+</html>

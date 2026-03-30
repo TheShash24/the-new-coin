@@ -1,0 +1,358 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Setup — Diaspora Platform</title>
+  <link rel="stylesheet" href="shared.css">
+  <style>
+    :root { --page-primary: #5f6368; --page-dark: #3c4043; --page-light: #f1f3f4; }
+
+    .admin-topbar {
+      background: var(--neutral-900);
+      color: #fff;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 0 24px;
+      height: 56px;
+    }
+
+    .admin-topbar h1 { font-size: 1rem; font-weight: 600; flex: 1; }
+    .admin-badge {
+      background: #e53935;
+      border-radius: 4px;
+      font-size: .7rem;
+      font-weight: 700;
+      letter-spacing: .5px;
+      padding: 2px 8px;
+      text-transform: uppercase;
+    }
+
+    .admin-content {
+      max-width: 700px;
+      margin: 0 auto;
+      padding: 28px 24px;
+    }
+
+    .admin-section {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      margin-bottom: 20px;
+      overflow: hidden;
+    }
+
+    .admin-section-header {
+      background: var(--neutral-50);
+      border-bottom: 1px solid var(--border);
+      padding: 14px 20px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .admin-section-header h3 { font-size: .9375rem; margin: 0; }
+    .admin-section-header .method {
+      background: #e8f0fe;
+      color: #1a73e8;
+      border-radius: 4px;
+      font-size: .7rem;
+      font-weight: 700;
+      padding: 2px 7px;
+    }
+    .admin-section-header .endpoint {
+      font-family: monospace;
+      font-size: .8125rem;
+      color: var(--neutral-600);
+    }
+
+    .admin-section-body { padding: 20px; }
+
+    .org-selector {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 16px;
+    }
+    .org-sel-btn {
+      border: 1.5px solid var(--border);
+      border-radius: var(--radius-sm);
+      background: none;
+      cursor: pointer;
+      font-family: inherit;
+      font-size: .8125rem;
+      font-weight: 500;
+      padding: 6px 14px;
+      color: var(--neutral-600);
+      transition: all .15s;
+    }
+    .org-sel-btn.active { background: var(--neutral-900); border-color: var(--neutral-900); color: #fff; }
+
+    .response-box {
+      background: #1e1e1e;
+      border-radius: var(--radius-sm);
+      color: #ce9178;
+      font-family: 'Courier New', monospace;
+      font-size: .8125rem;
+      margin-top: 14px;
+      max-height: 200px;
+      overflow-y: auto;
+      padding: 14px;
+      white-space: pre-wrap;
+      word-break: break-all;
+      display: none;
+    }
+    .response-box.visible { display: block; }
+
+    .response-status {
+      display: inline-block;
+      border-radius: 4px;
+      font-size: .75rem;
+      font-weight: 700;
+      margin-bottom: 8px;
+      padding: 2px 8px;
+    }
+    .response-status.ok  { background: #1a3a1a; color: #4ec94e; }
+    .response-status.err { background: #3a1a1a; color: #f47070; }
+
+    .disclaimer {
+      background: #fff8e1;
+      border: 1px solid #ffe082;
+      border-radius: var(--radius-sm);
+      color: #5d4037;
+      font-size: .8125rem;
+      margin-bottom: 24px;
+      padding: 12px 16px;
+    }
+  </style>
+</head>
+<body>
+
+<script>
+  // Gate: redirect if ?admin=true is not present
+  if (!window.location.search.includes('admin=true')) {
+    window.location.replace('index.html')
+  }
+</script>
+
+<div class="admin-topbar">
+  <h1>⚙️ Diaspora Platform — Admin Setup</h1>
+  <span class="admin-badge">Internal</span>
+  <a href="index.html" class="btn-logout" style="margin-left:8px">← Back</a>
+</div>
+
+<div class="admin-content">
+
+  <div class="disclaimer">
+    ⚠️ This page is for bank operators only. These functions are executed directly against the Hyperledger Fabric network.
+    All actions are permanently recorded on the blockchain.
+  </div>
+
+  <!-- ── Init Ledger ──────────────────────────────────── -->
+  <div class="admin-section">
+    <div class="admin-section-header">
+      <span class="method">POST</span>
+      <h3>Init Ledger</h3>
+      <span class="endpoint">/ledger/init</span>
+    </div>
+    <div class="admin-section-body">
+      <p style="font-size:.875rem;color:var(--neutral-600);margin-bottom:16px">
+        Creates the CBOS_WALLET system wallet. Run exactly once after chaincode deployment. Requires Org1.
+      </p>
+      <button class="btn" style="background:var(--neutral-900);color:#fff" id="btn-init">Init Ledger (Org1)</button>
+      <div class="response-box" id="res-init"></div>
+    </div>
+  </div>
+
+  <!-- ── Register Wallet ──────────────────────────────── -->
+  <div class="admin-section">
+    <div class="admin-section-header">
+      <span class="method">POST</span>
+      <h3>Register Wallet</h3>
+      <span class="endpoint">/wallets</span>
+    </div>
+    <div class="admin-section-body">
+      <div class="org-selector">
+        <span style="font-size:.8125rem;color:var(--neutral-600);align-self:center">Org:</span>
+        <button class="org-sel-btn active" data-group="reg" data-org="Org1">Org1 (Bank A)</button>
+        <button class="org-sel-btn" data-group="reg" data-org="Org2">Org2 (Bank B)</button>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Wallet ID</label>
+          <input type="text" id="reg-id" placeholder="e.g. diaspora-001">
+        </div>
+        <div class="form-group" style="max-width:150px">
+          <label>Role</label>
+          <select id="reg-role">
+            <option value="DIASPORA">DIASPORA</option>
+            <option value="RELATIVE">RELATIVE</option>
+            <option value="VENDOR">VENDOR</option>
+          </select>
+        </div>
+        <div class="form-group" style="max-width:110px">
+          <label>KYC Tier</label>
+          <select id="reg-kyc">
+            <option value="1">1</option>
+            <option value="2" selected>2</option>
+            <option value="3">3</option>
+          </select>
+        </div>
+      </div>
+      <button class="btn" style="background:var(--neutral-900);color:#fff" id="btn-register">Register Wallet</button>
+      <div class="response-box" id="res-register"></div>
+    </div>
+  </div>
+
+  <!-- ── Mint Tokens ───────────────────────────────────── -->
+  <div class="admin-section">
+    <div class="admin-section-header">
+      <span class="method">POST</span>
+      <h3>Mint Tokens</h3>
+      <span class="endpoint">/tokens/mint</span>
+    </div>
+    <div class="admin-section-body">
+      <p style="font-size:.875rem;color:var(--neutral-600);margin-bottom:16px">
+        Org1 only. Mints tokens against a verified bank deposit. The deposit reference is stored permanently on-chain and cannot be reused.
+      </p>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Wallet ID</label>
+          <input type="text" id="mint-wallet" placeholder="e.g. diaspora-001">
+        </div>
+        <div class="form-group" style="max-width:140px">
+          <label>Amount</label>
+          <input type="number" id="mint-amount" placeholder="e.g. 1000" min="1">
+        </div>
+        <div class="form-group">
+          <label>Deposit Reference</label>
+          <input type="text" id="mint-ref" placeholder="e.g. DEP-2024-001">
+        </div>
+      </div>
+      <button class="btn" style="background:var(--neutral-900);color:#fff" id="btn-mint">Mint Tokens (Org1)</button>
+      <div class="response-box" id="res-mint"></div>
+    </div>
+  </div>
+
+  <!-- ── Update KYC Tier ───────────────────────────────── -->
+  <div class="admin-section">
+    <div class="admin-section-header">
+      <span class="method">PUT</span>
+      <h3>Update KYC Tier</h3>
+      <span class="endpoint">/wallets/{id}/kyc</span>
+    </div>
+    <div class="admin-section-body">
+      <div class="org-selector">
+        <span style="font-size:.8125rem;color:var(--neutral-600);align-self:center">Org:</span>
+        <button class="org-sel-btn active" data-group="kyc" data-org="Org1">Org1 (Bank A)</button>
+        <button class="org-sel-btn" data-group="kyc" data-org="Org2">Org2 (Bank B)</button>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Wallet ID</label>
+          <input type="text" id="kyc-wallet" placeholder="e.g. diaspora-001">
+        </div>
+        <div class="form-group" style="max-width:140px">
+          <label>New KYC Tier</label>
+          <select id="kyc-tier">
+            <option value="1">1 — up to 1,000 DSP</option>
+            <option value="2" selected>2 — up to 10,000 DSP</option>
+            <option value="3">3 — unlimited</option>
+          </select>
+        </div>
+      </div>
+      <button class="btn" style="background:var(--neutral-900);color:#fff" id="btn-kyc">Update KYC Tier</button>
+      <div class="response-box" id="res-kyc"></div>
+    </div>
+  </div>
+
+</div><!-- end .admin-content -->
+
+<script src="api.js"></script>
+<script>
+// ── Org selectors ──────────────────────────────────────────
+const orgState = { reg: 'Org1', kyc: 'Org1' }
+
+document.querySelectorAll('.org-sel-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const group = btn.dataset.group
+    orgState[group] = btn.dataset.org
+    document.querySelectorAll(`.org-sel-btn[data-group="${group}"]`).forEach(b => b.classList.remove('active'))
+    btn.classList.add('active')
+  })
+})
+
+// ── Response display ───────────────────────────────────────
+function showAdminResponse(boxId, status, data) {
+  const box = document.getElementById(boxId)
+  const ok = status >= 200 && status < 300
+  const statusEl = `<span class="response-status ${ok ? 'ok' : 'err'}">HTTP ${status}</span>\n`
+  box.className = 'response-box visible'
+  box.innerHTML = statusEl + escHtml(typeof data === 'string' ? data : JSON.stringify(data, null, 2))
+}
+
+// ── Init Ledger ────────────────────────────────────────────
+document.getElementById('btn-init').addEventListener('click', async () => {
+  const btn = document.getElementById('btn-init')
+  btn.disabled = true; btn.textContent = 'Initialising…'
+  try {
+    const res = await apiFetch('POST', '/ledger/init', 'Org1')
+    showAdminResponse('res-init', res.status, res.data)
+    if (res.ok) showToast('Ledger initialised successfully.', 'success')
+    else showToast('Init failed. See response.', 'error')
+  } catch (err) { showToast(err.message, 'error') }
+  finally { btn.disabled = false; btn.textContent = 'Init Ledger (Org1)' }
+})
+
+// ── Register Wallet ────────────────────────────────────────
+document.getElementById('btn-register').addEventListener('click', async () => {
+  const id = document.getElementById('reg-id').value.trim()
+  const role = document.getElementById('reg-role').value
+  const kycTier = document.getElementById('reg-kyc').value
+  if (!id) return showToast('Wallet ID is required.', 'error')
+  const btn = document.getElementById('btn-register')
+  btn.disabled = true; btn.textContent = 'Registering…'
+  try {
+    const res = await apiFetch('POST', '/wallets', orgState.reg, { id, role, kycTier })
+    showAdminResponse('res-register', res.status, res.data)
+    if (res.ok) showToast(`Wallet "${id}" registered as ${role}.`, 'success')
+    else showToast(friendlyError(res.data), 'error')
+  } catch (err) { showToast(err.message, 'error') }
+  finally { btn.disabled = false; btn.textContent = 'Register Wallet' }
+})
+
+// ── Mint Tokens ────────────────────────────────────────────
+document.getElementById('btn-mint').addEventListener('click', async () => {
+  const walletId = document.getElementById('mint-wallet').value.trim()
+  const amount = document.getElementById('mint-amount').value.trim()
+  const depositRef = document.getElementById('mint-ref').value.trim()
+  if (!walletId || !amount || !depositRef) return showToast('All fields are required.', 'error')
+  const btn = document.getElementById('btn-mint')
+  btn.disabled = true; btn.textContent = 'Minting…'
+  try {
+    const res = await apiFetch('POST', '/tokens/mint', 'Org1', { walletId, amount: String(amount), depositRef })
+    showAdminResponse('res-mint', res.status, res.data)
+    if (res.ok) showToast(`Minted ${fmtAmount(amount)} DSP to "${walletId}".`, 'success')
+    else showToast(friendlyError(res.data), 'error')
+  } catch (err) { showToast(err.message, 'error') }
+  finally { btn.disabled = false; btn.textContent = 'Mint Tokens (Org1)' }
+})
+
+// ── Update KYC Tier ────────────────────────────────────────
+document.getElementById('btn-kyc').addEventListener('click', async () => {
+  const walletId = document.getElementById('kyc-wallet').value.trim()
+  const newTier = document.getElementById('kyc-tier').value
+  if (!walletId) return showToast('Wallet ID is required.', 'error')
+  const btn = document.getElementById('btn-kyc')
+  btn.disabled = true; btn.textContent = 'Updating…'
+  try {
+    const res = await apiFetch('PUT', `/wallets/${encodeURIComponent(walletId)}/kyc`, orgState.kyc, { newTier })
+    showAdminResponse('res-kyc', res.status, res.data)
+    if (res.ok) showToast(`KYC tier updated to ${newTier} for "${walletId}".`, 'success')
+    else showToast(friendlyError(res.data), 'error')
+  } catch (err) { showToast(err.message, 'error') }
+  finally { btn.disabled = false; btn.textContent = 'Update KYC Tier' }
+})
+</script>
+</body>
+</html>
