@@ -1,0 +1,545 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Diaspora Remittance Platform</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<header>
+  <h1>&#127760; Diaspora Remittance Platform</h1>
+  <div class="org-switcher">
+    <span>Acting as:</span>
+    <button class="org-btn" data-org="Org1">Bank A (Org1)</button>
+    <button class="org-btn" data-org="Org2">Bank B (Org2)</button>
+    <button class="org-btn" data-org="Org3">CBOS (Org3)</button>
+    <span id="active-org-label">— no org selected —</span>
+  </div>
+</header>
+
+<nav class="tabs">
+  <button class="tab-btn active" data-tab="diaspora">Diaspora Flow</button>
+  <button class="tab-btn" data-tab="sudan">Sudan-Side Flow</button>
+  <button class="tab-btn" data-tab="cbos">CBOS Flow</button>
+  <button class="tab-btn" data-tab="audit">Audit</button>
+  <button class="tab-btn" data-tab="admin">Admin</button>
+</nav>
+
+<div class="main">
+  <div class="flow-panel">
+
+    <!-- ══════════════════════════════════════════════════ -->
+    <!-- Tab 1: Diaspora Flow                               -->
+    <!-- ══════════════════════════════════════════════════ -->
+    <div class="tab-panel active" id="tab-diaspora">
+      <p class="section-title">Diaspora Flow — Register wallet, mint tokens, transfer to relative</p>
+
+      <!-- Register Wallet -->
+      <div class="card">
+        <div class="card-header">
+          <span class="badge badge-post">POST</span>
+          Register Wallet &nbsp;<code>/wallets</code>
+        </div>
+        <div class="card-body">
+          <div class="form-row">
+            <div class="form-group">
+              <label>Wallet ID</label>
+              <input type="text" id="d-reg-id" placeholder="e.g. diaspora-001">
+            </div>
+            <div class="form-group">
+              <label>Role</label>
+              <select id="d-reg-role">
+                <option value="DIASPORA">DIASPORA</option>
+                <option value="RELATIVE">RELATIVE</option>
+                <option value="VENDOR">VENDOR</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>KYC Tier</label>
+              <select id="d-reg-kyc">
+                <option value="1">1</option>
+                <option value="2" selected>2</option>
+                <option value="3">3</option>
+              </select>
+            </div>
+          </div>
+          <button class="btn btn-primary" id="btn-d-register">Register Wallet</button>
+          <div class="status-msg" id="st-d-register"></div>
+        </div>
+      </div>
+
+      <!-- Mint Tokens -->
+      <div class="card">
+        <div class="card-header">
+          <span class="badge badge-post">POST</span>
+          Mint Tokens &nbsp;<code>/tokens/mint</code>
+        </div>
+        <div class="card-body">
+          <div class="form-row">
+            <div class="form-group">
+              <label>Wallet ID</label>
+              <input type="text" id="d-mint-wallet" placeholder="e.g. diaspora-001">
+            </div>
+            <div class="form-group">
+              <label>Amount</label>
+              <input type="number" id="d-mint-amount" placeholder="e.g. 1000" min="1">
+            </div>
+            <div class="form-group">
+              <label>Deposit Reference</label>
+              <input type="text" id="d-mint-ref" placeholder="e.g. DEP-2024-001">
+            </div>
+          </div>
+          <button class="btn btn-primary" id="btn-d-mint">Mint Tokens</button>
+          <div class="status-msg" id="st-d-mint"></div>
+        </div>
+      </div>
+
+      <!-- Transfer -->
+      <div class="card">
+        <div class="card-header">
+          <span class="badge badge-post">POST</span>
+          Transfer to Relative &nbsp;<code>/tokens/transfer</code>
+        </div>
+        <div class="card-body">
+          <div class="form-row">
+            <div class="form-group">
+              <label>From Wallet ID</label>
+              <input type="text" id="d-tx-from" placeholder="e.g. diaspora-001">
+            </div>
+            <div class="form-group">
+              <label>To Wallet ID</label>
+              <input type="text" id="d-tx-to" placeholder="e.g. relative-001">
+            </div>
+            <div class="form-group">
+              <label>Amount</label>
+              <input type="number" id="d-tx-amount" placeholder="e.g. 500" min="1">
+            </div>
+          </div>
+          <button class="btn btn-primary" id="btn-d-transfer">Transfer</button>
+          <div class="status-msg" id="st-d-transfer"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══════════════════════════════════════════════════ -->
+    <!-- Tab 2: Sudan-Side Flow                             -->
+    <!-- ══════════════════════════════════════════════════ -->
+    <div class="tab-panel" id="tab-sudan">
+      <p class="section-title">Sudan-Side Flow — Register wallet, pay vendor, initiate burn</p>
+
+      <!-- Register Wallet -->
+      <div class="card">
+        <div class="card-header">
+          <span class="badge badge-post">POST</span>
+          Register Wallet &nbsp;<code>/wallets</code>
+        </div>
+        <div class="card-body">
+          <div class="form-row">
+            <div class="form-group">
+              <label>Wallet ID</label>
+              <input type="text" id="s-reg-id" placeholder="e.g. relative-001">
+            </div>
+            <div class="form-group">
+              <label>Role</label>
+              <select id="s-reg-role">
+                <option value="RELATIVE">RELATIVE</option>
+                <option value="VENDOR">VENDOR</option>
+                <option value="DIASPORA">DIASPORA</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>KYC Tier</label>
+              <select id="s-reg-kyc">
+                <option value="1">1</option>
+                <option value="2" selected>2</option>
+                <option value="3">3</option>
+              </select>
+            </div>
+          </div>
+          <button class="btn btn-success" id="btn-s-register">Register Wallet</button>
+          <div class="status-msg" id="st-s-register"></div>
+        </div>
+      </div>
+
+      <!-- Pay Vendor -->
+      <div class="card">
+        <div class="card-header">
+          <span class="badge badge-post">POST</span>
+          Pay Vendor &nbsp;<code>/tokens/pay</code>
+        </div>
+        <div class="card-body">
+          <div class="form-row">
+            <div class="form-group">
+              <label>From (Relative) Wallet ID</label>
+              <input type="text" id="s-pay-from" placeholder="e.g. relative-001">
+            </div>
+            <div class="form-group">
+              <label>To (Vendor) Wallet ID</label>
+              <input type="text" id="s-pay-to" placeholder="e.g. vendor-001">
+            </div>
+            <div class="form-group">
+              <label>Amount</label>
+              <input type="number" id="s-pay-amount" placeholder="e.g. 200" min="1">
+            </div>
+          </div>
+          <button class="btn btn-success" id="btn-s-pay">Pay Vendor</button>
+          <div class="status-msg" id="st-s-pay"></div>
+        </div>
+      </div>
+
+      <!-- Initiate Burn -->
+      <div class="card">
+        <div class="card-header">
+          <span class="badge badge-post">POST</span>
+          Initiate Burn (Form IM) &nbsp;<code>/burns</code>
+        </div>
+        <div class="card-body">
+          <div class="form-row">
+            <div class="form-group">
+              <label>Vendor Wallet ID</label>
+              <input type="text" id="s-burn-vendor" placeholder="e.g. vendor-001">
+            </div>
+            <div class="form-group">
+              <label>Amount</label>
+              <input type="number" id="s-burn-amount" placeholder="e.g. 100" min="1">
+            </div>
+            <div class="form-group">
+              <label>Form IM Reference</label>
+              <input type="text" id="s-burn-ref" placeholder="e.g. FORM-IM-2024-001">
+            </div>
+          </div>
+          <button class="btn btn-success" id="btn-s-burn">Initiate Burn</button>
+          <div class="status-msg" id="st-s-burn"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══════════════════════════════════════════════════ -->
+    <!-- Tab 3: CBOS Flow                                   -->
+    <!-- ══════════════════════════════════════════════════ -->
+    <div class="tab-panel" id="tab-cbos">
+      <p class="section-title">CBOS Regulatory Flow — Review burns, freeze wallets, claim fees, AML monitoring</p>
+
+      <!-- Pending Burns -->
+      <div class="card">
+        <div class="card-header">
+          <span class="badge badge-get">GET</span>
+          Pending Burn Requests &nbsp;<code>/burns</code>
+        </div>
+        <div class="card-body">
+          <div class="form-row">
+            <div class="form-group" style="max-width:100px">
+              <label>Page Size</label>
+              <input type="number" id="c-burns-pagesize" value="10" min="1">
+            </div>
+            <div class="form-group">
+              <label>Bookmark</label>
+              <input type="text" id="c-burns-bookmark" placeholder="leave empty for first page">
+            </div>
+          </div>
+          <button class="btn btn-danger" id="btn-c-burns">Load Pending Burns</button>
+          <div id="burns-table-container"></div>
+          <div class="status-msg" id="st-c-burns"></div>
+        </div>
+      </div>
+
+      <!-- Approve / Reject -->
+      <div class="card">
+        <div class="card-header">
+          <span class="badge badge-post">POST</span>
+          Approve / Reject Burn &nbsp;<code>/burns/{id}/approve|reject</code>
+        </div>
+        <div class="card-body">
+          <div class="form-row">
+            <div class="form-group">
+              <label>Burn TX ID</label>
+              <input type="text" id="c-resolve-id" placeholder="paste TX ID from table above">
+            </div>
+          </div>
+          <div class="btn-row">
+            <button class="btn btn-success" id="btn-c-approve">Approve</button>
+            <button class="btn btn-danger"  id="btn-c-reject">Reject</button>
+          </div>
+          <div class="status-msg" id="st-c-resolve"></div>
+        </div>
+      </div>
+
+      <!-- Freeze / Unfreeze -->
+      <div class="card">
+        <div class="card-header">
+          <span class="badge badge-post">POST</span>
+          Freeze / Unfreeze Wallet &nbsp;<code>/wallets/{id}/freeze|unfreeze</code>
+        </div>
+        <div class="card-body">
+          <div class="form-row">
+            <div class="form-group">
+              <label>Wallet ID</label>
+              <input type="text" id="c-freeze-id" placeholder="e.g. vendor-001">
+            </div>
+          </div>
+          <div class="btn-row">
+            <button class="btn btn-danger"   id="btn-c-freeze">Freeze</button>
+            <button class="btn btn-secondary" id="btn-c-unfreeze">Unfreeze</button>
+          </div>
+          <div class="status-msg" id="st-c-freeze"></div>
+        </div>
+      </div>
+
+      <!-- Claim Fees -->
+      <div class="card">
+        <div class="card-header">
+          <span class="badge badge-post">POST</span>
+          Claim CBOS Fees &nbsp;<code>/fees/claim</code>
+        </div>
+        <div class="card-body">
+          <div class="form-row">
+            <div class="form-group">
+              <label>CBOS Wallet ID</label>
+              <input type="text" id="c-claim-wallet" value="CBOS_WALLET">
+            </div>
+          </div>
+          <button class="btn btn-danger" id="btn-c-claim">Claim Fees</button>
+          <div class="status-msg" id="st-c-claim"></div>
+        </div>
+      </div>
+
+      <!-- Large Transactions AML -->
+      <div class="card">
+        <div class="card-header">
+          <span class="badge badge-get">GET</span>
+          Large Transactions — AML &nbsp;<code>/tokens/large-transactions</code>
+        </div>
+        <div class="card-body">
+          <div class="form-row">
+            <div class="form-group">
+              <label>Threshold (min amount)</label>
+              <input type="number" id="c-aml-threshold" placeholder="e.g. 500" min="1">
+            </div>
+            <div class="form-group" style="max-width:100px">
+              <label>Page Size</label>
+              <input type="number" id="c-aml-pagesize" value="10" min="1">
+            </div>
+            <div class="form-group">
+              <label>Bookmark</label>
+              <input type="text" id="c-aml-bookmark" placeholder="leave empty for first page">
+            </div>
+          </div>
+          <button class="btn btn-danger" id="btn-c-aml">Run AML Query</button>
+          <div class="status-msg" id="st-c-aml"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══════════════════════════════════════════════════ -->
+    <!-- Tab 4: Audit                                       -->
+    <!-- ══════════════════════════════════════════════════ -->
+    <div class="tab-panel" id="tab-audit">
+      <p class="section-title">Audit — Read-only queries against on-chain state</p>
+
+      <!-- Wallet Details -->
+      <div class="card">
+        <div class="card-header">
+          <span class="badge badge-get">GET</span>
+          Wallet Details &nbsp;<code>/wallets/{id}</code>
+        </div>
+        <div class="card-body">
+          <div class="form-row">
+            <div class="form-group">
+              <label>Wallet ID</label>
+              <input type="text" id="a-wallet-id" placeholder="e.g. diaspora-001">
+            </div>
+          </div>
+          <div class="btn-row">
+            <button class="btn btn-primary" id="btn-a-wallet">Get Wallet</button>
+            <button class="btn btn-secondary" id="btn-a-balance">Get Balance</button>
+          </div>
+          <div class="status-msg" id="st-a-wallet"></div>
+        </div>
+      </div>
+
+      <!-- Wallet History -->
+      <div class="card">
+        <div class="card-header">
+          <span class="badge badge-get">GET</span>
+          Wallet History &nbsp;<code>/wallets/{id}/history</code>
+        </div>
+        <div class="card-body">
+          <div class="form-row">
+            <div class="form-group">
+              <label>Wallet ID</label>
+              <input type="text" id="a-history-id" placeholder="e.g. diaspora-001">
+            </div>
+          </div>
+          <button class="btn btn-primary" id="btn-a-history">Get History</button>
+          <div class="status-msg" id="st-a-history"></div>
+        </div>
+      </div>
+
+      <!-- Transactions by Wallet -->
+      <div class="card">
+        <div class="card-header">
+          <span class="badge badge-get">GET</span>
+          Transactions by Wallet &nbsp;<code>/tokens/transactions?walletId=</code>
+        </div>
+        <div class="card-body">
+          <div class="form-row">
+            <div class="form-group">
+              <label>Wallet ID</label>
+              <input type="text" id="a-txwallet-id" placeholder="e.g. diaspora-001">
+            </div>
+            <div class="form-group" style="max-width:100px">
+              <label>Page Size</label>
+              <input type="number" id="a-txwallet-pagesize" value="10" min="1">
+            </div>
+            <div class="form-group">
+              <label>Bookmark</label>
+              <input type="text" id="a-txwallet-bookmark" placeholder="leave empty for first page">
+            </div>
+          </div>
+          <button class="btn btn-primary" id="btn-a-txwallet">Get Transactions</button>
+          <div class="status-msg" id="st-a-txwallet"></div>
+        </div>
+      </div>
+
+      <!-- Total Supply + TX Lookup -->
+      <div class="card">
+        <div class="card-header">
+          <span class="badge badge-get">GET</span>
+          Total Supply &nbsp;<code>/tokens/supply</code>
+        </div>
+        <div class="card-body">
+          <button class="btn btn-primary" id="btn-a-supply">Get Total Supply</button>
+          <div class="status-msg" id="st-a-supply"></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <span class="badge badge-get">GET</span>
+          Transaction Lookup &nbsp;<code>/transactions/{txId}</code>
+        </div>
+        <div class="card-body">
+          <div class="form-row">
+            <div class="form-group">
+              <label>Transaction ID</label>
+              <input type="text" id="a-tx-id" placeholder="64-character hex TX ID">
+            </div>
+          </div>
+          <button class="btn btn-primary" id="btn-a-tx">Get Transaction</button>
+          <div class="status-msg" id="st-a-tx"></div>
+        </div>
+      </div>
+
+      <!-- Burn Request Lookup -->
+      <div class="card">
+        <div class="card-header">
+          <span class="badge badge-get">GET</span>
+          Burn Request Lookup &nbsp;<code>/burns/{id}</code>
+        </div>
+        <div class="card-body">
+          <div class="form-row">
+            <div class="form-group">
+              <label>Burn TX ID</label>
+              <input type="text" id="a-burn-id" placeholder="TX ID of InitiateBurn">
+            </div>
+          </div>
+          <button class="btn btn-primary" id="btn-a-burn">Get Burn Request</button>
+          <div class="status-msg" id="st-a-burn"></div>
+        </div>
+      </div>
+
+      <!-- Wallets by Role -->
+      <div class="card">
+        <div class="card-header">
+          <span class="badge badge-get">GET</span>
+          Wallets by Role &nbsp;<code>/wallets?role=</code>
+        </div>
+        <div class="card-body">
+          <div class="form-row">
+            <div class="form-group">
+              <label>Role</label>
+              <select id="a-role-filter">
+                <option value="DIASPORA">DIASPORA</option>
+                <option value="RELATIVE">RELATIVE</option>
+                <option value="VENDOR">VENDOR</option>
+                <option value="CBOS">CBOS</option>
+              </select>
+            </div>
+            <div class="form-group" style="max-width:100px">
+              <label>Page Size</label>
+              <input type="number" id="a-role-pagesize" value="10" min="1">
+            </div>
+            <div class="form-group">
+              <label>Bookmark</label>
+              <input type="text" id="a-role-bookmark" placeholder="leave empty for first page">
+            </div>
+          </div>
+          <button class="btn btn-primary" id="btn-a-role">Get Wallets</button>
+          <div class="status-msg" id="st-a-role"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══════════════════════════════════════════════════ -->
+    <!-- Tab 5: Admin                                       -->
+    <!-- ══════════════════════════════════════════════════ -->
+    <div class="tab-panel" id="tab-admin">
+      <p class="section-title">Admin — Ledger initialisation and KYC management</p>
+
+      <!-- Init Ledger -->
+      <div class="card">
+        <div class="card-header">
+          <span class="badge badge-post">POST</span>
+          Init Ledger &nbsp;<code>/ledger/init</code>
+        </div>
+        <div class="card-body">
+          <p style="font-size:12px;color:#5f6368;margin-bottom:12px;">Creates the CBOS_WALLET system wallet. Run once after chaincode deployment. Requires Org1.</p>
+          <button class="btn btn-primary" id="btn-admin-init">Init Ledger</button>
+          <div class="status-msg" id="st-admin-init"></div>
+        </div>
+      </div>
+
+      <!-- Update KYC Tier -->
+      <div class="card">
+        <div class="card-header">
+          <span class="badge badge-put">PUT</span>
+          Update KYC Tier &nbsp;<code>/wallets/{id}/kyc</code>
+        </div>
+        <div class="card-body">
+          <div class="form-row">
+            <div class="form-group">
+              <label>Wallet ID</label>
+              <input type="text" id="admin-kyc-id" placeholder="e.g. diaspora-001">
+            </div>
+            <div class="form-group" style="max-width:120px">
+              <label>New KYC Tier</label>
+              <select id="admin-kyc-tier">
+                <option value="1">1</option>
+                <option value="2">2</option>
+                <option value="3">3</option>
+              </select>
+            </div>
+          </div>
+          <button class="btn btn-primary" id="btn-admin-kyc">Update KYC Tier</button>
+          <div class="status-msg" id="st-admin-kyc"></div>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- end .flow-panel -->
+
+  <!-- ── Response Panel ─────────────────────────────────── -->
+  <div class="response-panel">
+    <div class="response-panel-header">
+      <h3>Last API Response</h3>
+      <span id="status-badge">—</span>
+    </div>
+    <pre id="response-body">Make a request to see the response here.</pre>
+  </div>
+</div>
+
+<script src="app.js"></script>
+</body>
+</html>
