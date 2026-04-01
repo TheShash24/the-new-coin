@@ -3,49 +3,36 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Vendor — Diaspora Platform</title>
+  <title>Hawal Digital — Business Account</title>
   <link rel="stylesheet" href="shared.css">
   <style>
-    :root { --page-primary: var(--bank-b); --page-dark: var(--bank-b-dark); --page-light: var(--bank-b-light); }
+    :root { --page-primary: var(--amber); --page-dark: var(--amber-dark); --page-light: var(--amber-light); }
 
-    .request-card {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      padding: 18px 20px;
-      margin-bottom: 12px;
-      display: flex;
-      align-items: center;
-      gap: 16px;
-    }
-    .request-card-body { flex: 1; }
-    .request-card-amount { font-size: 1.25rem; font-weight: 700; margin-bottom: 2px; }
-    .request-card-meta { color: var(--neutral-600); font-size: .8125rem; }
-    .request-card-id { font-family: monospace; font-size: .75rem; color: var(--neutral-400); margin-top: 4px; }
+    .balance-card { background: linear-gradient(135deg, var(--amber-dark) 0%, var(--amber) 100%); }
   </style>
 </head>
 <body>
 
 <header class="topbar">
-  <div class="topbar-logo">🌍 Diaspora Platform <span>Vendor</span></div>
-  <span class="role-badge">🏪 Vendor &middot; Bank B</span>
-  <a class="btn-logout" href="index.html">← Switch Role</a>
+  <div class="topbar-logo">Hawal <span style="color:var(--amber)">Digital</span></div>
+  <span class="role-badge" style="background:var(--amber-light);color:var(--amber-dark)">🏪 Business Account</span>
+  <a class="btn-logout" href="index.html">← Back</a>
 </header>
 
 <nav class="nav-tabs">
   <button class="nav-tab active" data-tab="home">Home</button>
-  <button class="nav-tab" data-tab="requests">Exchange Requests</button>
+  <button class="nav-tab" data-tab="settlements">Settlements</button>
   <button class="nav-tab" data-tab="history">Transaction History</button>
 </nav>
 
 <div class="page-content" style="max-width:760px">
 
-  <!-- Wallet Setup -->
+  <!-- Account Setup Prompt -->
   <div id="setup-prompt" class="setup-prompt" style="display:none">
-    <h3>Welcome, vendor.</h3>
-    <p>Enter your wallet ID to access your account.</p>
-    <div style="display:flex;gap:10px;max-width:360px;margin:0 auto">
-      <input type="text" id="setup-wallet-input" placeholder="Your wallet ID (e.g. vendor-001)" style="flex:1">
+    <h3>Welcome to your Business Account.</h3>
+    <p>Enter your account number to access your balance and request settlements.</p>
+    <div style="display:flex;gap:10px;max-width:400px;margin:0 auto">
+      <input type="text" id="setup-wallet-input" placeholder="Account number (e.g. vendor-001)" style="flex:1">
       <button class="btn btn-primary" id="btn-setup-save">Get Started</button>
     </div>
   </div>
@@ -56,12 +43,12 @@
     <div class="balance-card" id="balance-card">
       <div class="balance-label">Available Balance</div>
       <div class="balance-amount" id="balance-amount">—</div>
-      <div class="balance-currency">DSP Tokens</div>
+      <div class="balance-currency">GBP</div>
       <div class="balance-footer">
         <span class="balance-meta" id="balance-wallet-id"></span>
-        <button class="btn btn-lg" id="btn-request-exchange"
+        <button class="btn btn-lg" id="btn-request-settlement"
           style="background:rgba(255,255,255,.2);border:1.5px solid rgba(255,255,255,.4);color:#fff;margin-left:auto">
-          💱 Request Exchange
+          💱 Request Settlement
         </button>
       </div>
     </div>
@@ -69,7 +56,7 @@
     <div class="card">
       <div class="card-body">
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
-          <h3>Recent Transactions</h3>
+          <h3>Recent payments received</h3>
           <button class="btn btn-ghost btn-sm" data-tab-target="history">View all →</button>
         </div>
         <div id="recent-tx"></div>
@@ -78,17 +65,17 @@
 
   </div>
 
-  <!-- Exchange Requests Panel -->
-  <div class="tab-panel" id="panel-requests">
+  <!-- Settlements Panel -->
+  <div class="tab-panel" id="panel-settlements">
     <div class="section-header">
-      <h2>Exchange Requests</h2>
-      <button class="btn btn-primary btn-sm" id="btn-new-request">+ New Request</button>
+      <h2>Settlement Requests</h2>
+      <button class="btn btn-primary btn-sm" id="btn-new-settlement">+ New Request</button>
     </div>
 
-    <div id="requests-container">
+    <div id="settlements-container">
       <div class="empty-state">
         <div class="empty-icon">📄</div>
-        <p>No exchange requests this session.</p>
+        <p>No settlement requests this session.</p>
       </div>
     </div>
 
@@ -106,49 +93,56 @@
 
 </div>
 
-<!-- Request Exchange Modal -->
-<div class="modal-overlay" id="modal-exchange">
+<!-- Request Settlement Modal -->
+<div class="modal-overlay" id="modal-settlement">
   <div class="modal">
-    <h3 class="modal-title">Request Foreign Exchange</h3>
-    <p class="modal-subtitle">Submit a Ministry of Trade Form IM to release hard currency</p>
+    <div class="wizard-steps" style="margin-bottom:20px">
+      <div class="wizard-step-dot active" id="sdot-1"></div>
+      <div class="wizard-step-dot" id="sdot-2"></div>
+    </div>
 
-    <div class="modal-step active" id="exchange-step-1">
+    <!-- Step 1: Details -->
+    <div class="modal-step active" id="settlement-step-1">
+      <h3 class="modal-title">Request Settlement</h3>
+      <p class="modal-subtitle">Submit an invoice to release hard currency from the Central Bank</p>
       <div class="form-group">
-        <label>Form IM Reference</label>
-        <input type="text" id="exchange-ref" placeholder="e.g. FORM-IM-2024-001">
-        <p class="hint">Ministry of Trade import document reference number</p>
+        <label>Invoice Reference</label>
+        <input type="text" id="settlement-ref" placeholder="e.g. INV-2024-001">
+        <p class="hint">Reference number from your import invoice</p>
       </div>
       <div class="form-group">
-        <label>Amount to exchange</label>
+        <label>Amount to settle</label>
         <div class="input-suffix">
-          <input type="number" id="exchange-amount" placeholder="0" min="1">
-          <span class="input-suffix-label">DSP</span>
+          <input type="number" id="settlement-amount" placeholder="0.00" min="1" step="any">
+          <span class="input-suffix-label">GBP</span>
         </div>
       </div>
       <div class="alert warning" style="font-size:.875rem">
-        Tokens will be <strong>escrowed immediately</strong> upon submission and held pending CBOS review.
+        Funds will be <strong>held</strong> while your request is reviewed by the Central Bank.
       </div>
-      <div id="exchange-step1-alert"></div>
+      <div id="settlement-step1-alert"></div>
       <div class="modal-footer">
-        <button class="btn btn-neutral" onclick="closeModal('modal-exchange')">Cancel</button>
-        <button class="btn btn-primary" id="btn-exchange-review">Review →</button>
+        <button class="btn btn-neutral" onclick="closeModal('modal-settlement')">Cancel</button>
+        <button class="btn btn-primary" id="btn-settlement-review">Review →</button>
       </div>
     </div>
 
-    <div class="modal-step" id="exchange-step-2">
-      <div class="confirm-detail">
-        <div class="confirm-row"><span>Vendor wallet</span><span id="ex-confirm-vendor">—</span></div>
-        <div class="confirm-row"><span>Amount to escrow</span><span id="ex-confirm-amount">—</span></div>
-        <div class="confirm-row"><span>Form IM reference</span><span id="ex-confirm-ref">—</span></div>
-        <div class="confirm-row"><span>CBOS approval required</span><span>Yes</span></div>
+    <!-- Step 2: Confirm -->
+    <div class="modal-step" id="settlement-step-2">
+      <h3 class="modal-title">Confirm request</h3>
+      <div class="fee-breakdown">
+        <div class="fee-breakdown-row"><span>Business account</span><span id="settle-confirm-vendor" class="account-chip">—</span></div>
+        <div class="fee-breakdown-row highlight"><span>Amount to settle</span><span id="settle-confirm-amount">—</span></div>
+        <div class="fee-breakdown-row"><span>Invoice Reference</span><span id="settle-confirm-ref">—</span></div>
+        <div class="fee-breakdown-row"><span>Approval required</span><span>Central Bank of Sudan</span></div>
       </div>
-      <div class="alert warning" style="font-size:.875rem">
-        Once submitted, tokens are locked until CBOS approves or rejects this request.
+      <div class="alert warning" style="font-size:.875rem;margin-top:16px">
+        Once submitted, funds are locked until the Central Bank approves or declines this request.
       </div>
-      <div id="exchange-step2-alert"></div>
+      <div id="settlement-step2-alert"></div>
       <div class="modal-footer">
-        <button class="btn btn-neutral" id="btn-exchange-back">← Back</button>
-        <button class="btn btn-primary" id="btn-exchange-confirm">Submit Request</button>
+        <button class="btn btn-neutral" id="btn-settlement-back">← Back</button>
+        <button class="btn btn-primary" id="btn-settlement-confirm">Submit Request</button>
       </div>
     </div>
   </div>
@@ -194,23 +188,23 @@ document.addEventListener('DOMContentLoaded', () => {
     if (e.key === 'Enter') document.getElementById('btn-setup-save').click()
   })
 
-  document.getElementById('btn-request-exchange').addEventListener('click', () => {
-    if (!walletId) return showToast('Please set your wallet ID first.', 'error')
-    showExchangeStep(1)
-    openModal('modal-exchange')
+  document.getElementById('btn-request-settlement').addEventListener('click', () => {
+    if (!walletId) return showToast('Please set your account number first.', 'error')
+    showSettlementStep(1)
+    openModal('modal-settlement')
   })
-  document.getElementById('btn-new-request').addEventListener('click', () => {
-    if (!walletId) return showToast('Please set your wallet ID first.', 'error')
-    showExchangeStep(1)
-    openModal('modal-exchange')
+  document.getElementById('btn-new-settlement').addEventListener('click', () => {
+    if (!walletId) return showToast('Please set your account number first.', 'error')
+    showSettlementStep(1)
+    openModal('modal-settlement')
   })
 
-  document.getElementById('btn-exchange-review').addEventListener('click', reviewExchange)
-  document.getElementById('btn-exchange-confirm').addEventListener('click', confirmExchange)
-  document.getElementById('btn-exchange-back').addEventListener('click', () => showExchangeStep(1))
+  document.getElementById('btn-settlement-review').addEventListener('click', reviewSettlement)
+  document.getElementById('btn-settlement-confirm').addEventListener('click', confirmSettlement)
+  document.getElementById('btn-settlement-back').addEventListener('click', () => showSettlementStep(1))
 
-  document.querySelector('.nav-tab[data-tab="requests"]')?.addEventListener('click', () => {
-    if (burnIds.length > 0) loadBurnRequests()
+  document.querySelector('.nav-tab[data-tab="settlements"]')?.addEventListener('click', () => {
+    if (burnIds.length > 0) loadSettlements()
   })
 
   document.querySelector('.nav-tab[data-tab="history"]')?.addEventListener('click', () => {
@@ -221,7 +215,7 @@ document.addEventListener('DOMContentLoaded', () => {
 })
 
 async function loadDashboard() {
-  document.getElementById('balance-wallet-id').textContent = 'Wallet: ' + walletId
+  document.getElementById('balance-wallet-id').textContent = 'Account: ' + walletId
   await loadBalance()
   await loadRecentTx()
 }
@@ -233,7 +227,7 @@ async function loadBalance() {
     const res = await apiFetch('GET', `/wallets/${encodeURIComponent(walletId)}/balance`, ORG)
     if (res.ok) {
       const bal = typeof res.data === 'object' ? (res.data.result ?? res.data) : res.data
-      el.textContent = fmtAmount(bal)
+      el.textContent = fmtCurrency(bal)
     } else { el.textContent = '—'; showToast(friendlyError(res.data), 'error') }
   } catch (err) { el.textContent = '—'; showToast(err.message, 'error') }
 }
@@ -242,9 +236,9 @@ async function loadRecentTx() {
   const container = document.getElementById('recent-tx')
   try {
     const res = await apiFetch('GET', `/tokens/transactions?walletId=${encodeURIComponent(walletId)}&pageSize=5&bookmark=`, ORG)
-    if (res.ok) renderTxTable(container, res.data?.records ?? [], walletId)
-    else container.innerHTML = `<p class="hint">Could not load recent transactions.</p>`
-  } catch { container.innerHTML = `<p class="hint">Could not load recent transactions.</p>` }
+    if (res.ok) renderActivityList(container, res.data?.records ?? [], walletId)
+    else container.innerHTML = `<p class="hint">Could not load recent activity.</p>`
+  } catch { container.innerHTML = `<p class="hint">Could not load recent activity.</p>` }
 }
 
 async function loadHistory() {
@@ -255,15 +249,15 @@ async function loadHistory() {
       const page = res.data?.records ?? []
       txRecords = txBookmark ? [...txRecords, ...page] : page
       txBookmark = res.data?.bookmark ?? ''
-      renderTxTable(container, txRecords, walletId)
+      renderTxTable(container, txRecords, walletId, false)
       document.getElementById('btn-load-more').style.display = (txBookmark && page.length >= 20) ? 'inline-flex' : 'none'
     } else showToast(friendlyError(res.data), 'error')
   } catch (err) { showToast(err.message, 'error') }
 }
 
-// ── Exchange Requests ─────────────────────────────────────
-async function loadBurnRequests() {
-  const container = document.getElementById('requests-container')
+// ── Settlement Requests ───────────────────────────────────
+async function loadSettlements() {
+  const container = document.getElementById('settlements-container')
   if (!burnIds.length) return
 
   container.innerHTML = '<p style="color:var(--neutral-400);font-size:.875rem;padding:12px 0">Loading…</p>'
@@ -278,60 +272,72 @@ async function loadBurnRequests() {
     .filter(Boolean)
 
   if (!requests.length) {
-    container.innerHTML = `<div class="empty-state"><div class="empty-icon">📄</div><p>No exchange requests found.</p></div>`
+    container.innerHTML = `<div class="empty-state"><div class="empty-icon">📄</div><p>No settlement requests found.</p></div>`
     return
   }
 
-  container.innerHTML = requests.map(req => `
-    <div class="request-card">
-      <div class="request-card-body">
-        <div class="request-card-amount">${fmtAmount(req.amount)} DSP</div>
-        <div class="request-card-meta">Form IM: ${escHtml(req.burnRef ?? '—')} &middot; ${fmtDate(req.initiatedAt)}</div>
-        <div class="request-card-id">TX: ${escHtml(truncId(req.id, 32))}</div>
-      </div>
-      ${statusPill(req.status)}
-    </div>`).join('')
+  const statusMap = { PENDING: 'processing', APPROVED: 'approved', REJECTED: 'declined' }
+  const labelMap  = { PENDING: 'Processing', APPROVED: 'Approved', REJECTED: 'Declined' }
+
+  container.innerHTML = requests.map(req => {
+    const s = (req.status ?? '').toUpperCase()
+    const cls = statusMap[s] ?? s.toLowerCase()
+    const label = labelMap[s] ?? req.status
+    return `
+      <div class="settlement-card ${cls}">
+        <div style="flex:1">
+          <div style="font-size:1.125rem;font-weight:700;margin-bottom:4px">${fmtCurrency(req.amount)}</div>
+          <div style="color:var(--neutral-600);font-size:.8125rem">Invoice Ref: ${escHtml(req.burnRef ?? '—')} &middot; ${fmtDate(req.initiatedAt)}</div>
+        </div>
+        <span class="pill pill-${cls}">${escHtml(label)}</span>
+      </div>`
+  }).join('')
 }
 
-function showExchangeStep(n) {
+function showSettlementStep(n) {
   document.querySelectorAll('.modal-step').forEach(s => s.classList.remove('active'))
-  document.getElementById(`exchange-step-${n}`).classList.add('active')
-  clearAlert('exchange-step1-alert'); clearAlert('exchange-step2-alert')
+  document.getElementById(`settlement-step-${n}`).classList.add('active')
+  ;[1,2].forEach(i => {
+    const dot = document.getElementById(`sdot-${i}`)
+    dot.classList.toggle('active', i === n)
+    dot.classList.toggle('done', i < n)
+  })
+  clearAlert('settlement-step1-alert')
+  clearAlert('settlement-step2-alert')
 }
 
-function reviewExchange() {
-  const ref = document.getElementById('exchange-ref').value.trim()
-  const amount = document.getElementById('exchange-amount').value.trim()
-  if (!ref) return setAlert('exchange-step1-alert', 'Please enter the Form IM reference.', 'error')
-  if (!amount || Number(amount) <= 0) return setAlert('exchange-step1-alert', 'Please enter a valid amount.', 'error')
-  document.getElementById('ex-confirm-vendor').textContent = walletId
-  document.getElementById('ex-confirm-amount').textContent = fmtAmount(amount) + ' DSP'
-  document.getElementById('ex-confirm-ref').textContent = ref
-  showExchangeStep(2)
+function reviewSettlement() {
+  const ref = document.getElementById('settlement-ref').value.trim()
+  const amount = document.getElementById('settlement-amount').value.trim()
+  if (!ref) return setAlert('settlement-step1-alert', 'Please enter an invoice reference.', 'error')
+  if (!amount || Number(amount) <= 0) return setAlert('settlement-step1-alert', 'Please enter a valid amount.', 'error')
+  document.getElementById('settle-confirm-vendor').textContent = walletId
+  document.getElementById('settle-confirm-amount').textContent = fmtCurrency(amount)
+  document.getElementById('settle-confirm-ref').textContent = ref
+  showSettlementStep(2)
 }
 
-async function confirmExchange() {
-  const burnRef = document.getElementById('exchange-ref').value.trim()
-  const amount = document.getElementById('exchange-amount').value.trim()
-  const btn = document.getElementById('btn-exchange-confirm')
+async function confirmSettlement() {
+  const burnRef = document.getElementById('settlement-ref').value.trim()
+  const amount = document.getElementById('settlement-amount').value.trim()
+  const btn = document.getElementById('btn-settlement-confirm')
   btn.disabled = true; btn.innerHTML = '<span class="spinner"></span> Submitting…'
   try {
     const res = await apiFetch('POST', '/burns', ORG, { vendorId: walletId, amount: String(amount), burnRef })
     if (res.ok) {
-      // Extract TX ID from response to track this burn request
       const txId = res.data?.txId ?? res.data?.id ?? res.data?.result
       if (txId && typeof txId === 'string' && txId.length > 8) {
         burnIds = [...burnIds, txId]
         saveItem(LS_BURNS, burnIds)
       }
-      closeModal('modal-exchange')
-      showToast(`Exchange request submitted. ${fmtAmount(amount)} DSP escrowed pending CBOS review.`, 'success')
-      document.getElementById('exchange-ref').value = ''
-      document.getElementById('exchange-amount').value = ''
+      closeModal('modal-settlement')
+      showToast(`Settlement request submitted. ${fmtCurrency(amount)} held pending Central Bank review.`, 'success')
+      document.getElementById('settlement-ref').value = ''
+      document.getElementById('settlement-amount').value = ''
       await loadBalance()
       txRecords = []; txBookmark = ''; await loadRecentTx()
-    } else setAlert('exchange-step2-alert', friendlyError(res.data), 'error')
-  } catch (err) { setAlert('exchange-step2-alert', err.message, 'error') }
+    } else setAlert('settlement-step2-alert', friendlyError(res.data), 'error')
+  } catch (err) { setAlert('settlement-step2-alert', err.message, 'error') }
   finally { btn.disabled = false; btn.textContent = 'Submit Request' }
 }
 

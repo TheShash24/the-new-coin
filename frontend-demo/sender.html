@@ -3,36 +3,33 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Diaspora Sender — Diaspora Platform</title>
+  <title>Hawal Digital — Send Money</title>
   <link rel="stylesheet" href="shared.css">
   <style>
-    :root { --page-primary: var(--bank-a); --page-dark: var(--bank-a-dark); --page-light: var(--bank-a-light); }
+    :root { --page-primary: var(--green); --page-dark: var(--green-dark); --page-light: var(--green-light); }
   </style>
 </head>
 <body>
 
-<!-- Topbar -->
 <header class="topbar">
-  <div class="topbar-logo">🌍 Diaspora Platform <span>Sender</span></div>
-  <span class="role-badge">✈️ Diaspora Sender &middot; Bank A</span>
-  <a class="btn-logout" href="index.html">← Switch Role</a>
+  <div class="topbar-logo">Hawal <span style="color:var(--green)">Digital</span></div>
+  <span class="role-badge">✈️ Sender</span>
+  <a class="btn-logout" href="index.html">← Back</a>
 </header>
 
-<!-- Nav Tabs -->
 <nav class="nav-tabs">
   <button class="nav-tab active" data-tab="home">Home</button>
-  <button class="nav-tab" data-tab="history">Transaction History</button>
+  <button class="nav-tab" data-tab="history">Transfer History</button>
 </nav>
 
-<!-- Content -->
 <div class="page-content" style="max-width:760px">
 
-  <!-- Wallet Setup Prompt (shown when no wallet ID saved) -->
+  <!-- Account Setup Prompt -->
   <div id="setup-prompt" class="setup-prompt" style="display:none">
-    <h3>Welcome! Let's get you set up.</h3>
-    <p>Enter your wallet ID to access your account. Your ID will be remembered on this device.</p>
-    <div style="display:flex;gap:10px;max-width:360px;margin:0 auto">
-      <input type="text" id="setup-wallet-input" placeholder="Your wallet ID (e.g. diaspora-001)" style="flex:1">
+    <h3>Welcome to Hawal Digital.</h3>
+    <p>Enter your account number to get started — it will be saved on this device.</p>
+    <div style="display:flex;gap:10px;max-width:400px;margin:0 auto">
+      <input type="text" id="setup-wallet-input" placeholder="Account number (e.g. diaspora-001)" style="flex:1">
       <button class="btn btn-primary" id="btn-setup-save">Get Started</button>
     </div>
   </div>
@@ -40,25 +37,42 @@
   <!-- Home Panel -->
   <div class="tab-panel active" id="panel-home">
 
-    <!-- Balance -->
+    <!-- Balance Card -->
     <div class="balance-card" id="balance-card">
-      <div class="balance-label">Available Balance</div>
+      <div class="balance-label">Your balance</div>
       <div class="balance-amount" id="balance-amount">—</div>
-      <div class="balance-currency">DSP Tokens</div>
+      <div class="balance-currency">GBP</div>
       <div class="balance-footer">
         <span class="balance-meta" id="balance-wallet-id"></span>
-        <button class="btn btn-lg" id="btn-send-money"
-          style="background:rgba(255,255,255,.2);border:1.5px solid rgba(255,255,255,.4);color:#fff;margin-left:auto">
-          ✈️ Send Money
-        </button>
       </div>
     </div>
 
-    <!-- Recent Transactions Preview -->
+    <!-- Send Calculator -->
+    <div class="send-calculator">
+      <div class="send-calc-label">How much do you want to send?</div>
+      <div class="input-suffix" style="margin-bottom:16px">
+        <input type="number" id="calc-amount" placeholder="0.00" min="1" step="any"
+          style="font-size:1.5rem;font-weight:700;padding:12px 16px">
+        <span class="input-suffix-label" style="font-size:1rem;font-weight:600">GBP</span>
+      </div>
+      <div class="fee-row">
+        <span>Our fee (0.10%)</span>
+        <span id="calc-fee">—</span>
+      </div>
+      <div class="fee-row total">
+        <span>Recipient gets</span>
+        <span id="calc-receive">—</span>
+      </div>
+      <button class="btn btn-primary" id="btn-send-money" style="width:100%;margin-top:16px;padding:14px">
+        Send Now →
+      </button>
+    </div>
+
+    <!-- Recent Activity -->
     <div class="card">
       <div class="card-body">
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
-          <h3>Recent Transactions</h3>
+          <h3>Recent transfers</h3>
           <button class="btn btn-ghost btn-sm" data-tab-target="history">View all →</button>
         </div>
         <div id="recent-tx"></div>
@@ -70,7 +84,7 @@
   <!-- History Panel -->
   <div class="tab-panel" id="panel-history">
     <div class="section-header">
-      <h2>Transaction History</h2>
+      <h2>Transfer History</h2>
       <button class="btn btn-ghost btn-sm" id="btn-load-more" style="display:none">Load more</button>
     </div>
     <div id="history-container"></div>
@@ -78,47 +92,71 @@
 
 </div>
 
-<!-- Send Money Modal -->
+<!-- Send Money Modal — 3 steps -->
 <div class="modal-overlay" id="modal-send">
   <div class="modal">
-    <h3 class="modal-title">Send Money</h3>
-    <p class="modal-subtitle">Transfer tokens to a relative's wallet</p>
+    <div class="wizard-steps" style="margin-bottom:20px">
+      <div class="wizard-step-dot active" id="dot-1"></div>
+      <div class="wizard-step-dot" id="dot-2"></div>
+      <div class="wizard-step-dot" id="dot-3"></div>
+    </div>
 
-    <!-- Step 1: Enter details -->
+    <!-- Step 1: Amount -->
     <div class="modal-step active" id="send-step-1">
-      <div class="form-group">
-        <label>Recipient wallet ID</label>
-        <input type="text" id="send-to" placeholder="e.g. relative-001">
-      </div>
+      <h3 class="modal-title">How much are you sending?</h3>
       <div class="form-group">
         <label>Amount</label>
         <div class="input-suffix">
-          <input type="number" id="send-amount" placeholder="0" min="1">
-          <span class="input-suffix-label">DSP</span>
+          <input type="number" id="send-amount" placeholder="0.00" min="1" step="any">
+          <span class="input-suffix-label">GBP</span>
         </div>
+        <p class="hint">Min. £1 &nbsp;·&nbsp; Fee: 0.10% (min £1)</p>
+      </div>
+      <div id="send-fee-preview" style="display:none" class="fee-breakdown" style="margin-top:4px">
+        <div class="fee-breakdown-row"><span>You send</span><span id="prev-send">—</span></div>
+        <div class="fee-breakdown-row"><span>Our fee</span><span id="prev-fee">—</span></div>
+        <div class="fee-breakdown-row highlight"><span>Recipient gets</span><span id="prev-recv">—</span></div>
       </div>
       <div id="send-step1-alert"></div>
       <div class="modal-footer">
         <button class="btn btn-neutral" onclick="closeModal('modal-send')">Cancel</button>
-        <button class="btn btn-primary" id="btn-send-review">Review →</button>
+        <button class="btn btn-primary" id="btn-send-step2">Continue →</button>
       </div>
     </div>
 
-    <!-- Step 2: Confirm -->
+    <!-- Step 2: Recipient -->
     <div class="modal-step" id="send-step-2">
-      <div class="confirm-detail">
-        <div class="confirm-row"><span>From</span><span id="confirm-from">—</span></div>
-        <div class="confirm-row"><span>To</span><span id="confirm-to">—</span></div>
-        <div class="confirm-row"><span>Amount</span><span id="confirm-amount">—</span></div>
-        <div class="confirm-row"><span>Network fee</span><span>0.10% (≈ 0 DSP)</span></div>
-      </div>
-      <div class="alert info" style="font-size:.875rem">
-        This transfer will be recorded immutably on the blockchain and cannot be reversed.
+      <h3 class="modal-title">Who are you sending to?</h3>
+      <div class="form-group">
+        <label>Recipient account number</label>
+        <input type="text" id="send-to" placeholder="e.g. relative-001">
+        <p class="hint">Your recipient's Hawal Digital account number in Sudan</p>
       </div>
       <div id="send-step2-alert"></div>
       <div class="modal-footer">
-        <button class="btn btn-neutral" id="btn-send-back">← Back</button>
-        <button class="btn btn-primary" id="btn-send-confirm">Confirm Send</button>
+        <button class="btn btn-neutral" id="btn-send-back2">← Back</button>
+        <button class="btn btn-primary" id="btn-send-step3">Review →</button>
+      </div>
+    </div>
+
+    <!-- Step 3: Review & Confirm -->
+    <div class="modal-step" id="send-step-3">
+      <h3 class="modal-title">Review your transfer</h3>
+      <div class="fee-breakdown">
+        <div class="fee-breakdown-row"><span>You send</span><span id="confirm-send">—</span></div>
+        <div class="fee-breakdown-row"><span>Our fee</span><span id="confirm-fee">—</span></div>
+        <div class="fee-breakdown-row highlight"><span>They receive</span><span id="confirm-recv">—</span></div>
+        <div class="fee-breakdown-row" style="margin-top:8px;padding-top:8px;border-top:1px solid var(--border)">
+          <span>To account</span><span id="confirm-to" class="account-chip">—</span>
+        </div>
+      </div>
+      <div class="alert info" style="font-size:.875rem;margin-top:16px">
+        Transfers are processed instantly and cannot be reversed.
+      </div>
+      <div id="send-step3-alert"></div>
+      <div class="modal-footer">
+        <button class="btn btn-neutral" id="btn-send-back3">← Back</button>
+        <button class="btn btn-primary" id="btn-send-confirm">Confirm &amp; Send</button>
       </div>
     </div>
   </div>
@@ -132,15 +170,12 @@ let walletId = loadItem(LS_KEY)
 let txBookmark = ''
 let txRecords = []
 
-// ── Init ──────────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', () => {
   initTabs()
 
-  // "View all" quick link
   document.querySelectorAll('[data-tab-target]').forEach(btn => {
     btn.addEventListener('click', () => {
-      const target = btn.dataset.tabTarget
-      document.querySelector(`.nav-tab[data-tab="${target}"]`)?.click()
+      document.querySelector(`.nav-tab[data-tab="${btn.dataset.tabTarget}"]`)?.click()
     })
   })
 
@@ -151,7 +186,6 @@ document.addEventListener('DOMContentLoaded', () => {
     loadDashboard()
   }
 
-  // Setup save
   document.getElementById('btn-setup-save').addEventListener('click', () => {
     const id = document.getElementById('setup-wallet-input').value.trim()
     if (!id) return
@@ -166,22 +200,58 @@ document.addEventListener('DOMContentLoaded', () => {
     if (e.key === 'Enter') document.getElementById('btn-setup-save').click()
   })
 
-  // Send money modal wiring
+  // Calculator live update
+  document.getElementById('calc-amount').addEventListener('input', updateCalc)
+
+  // Send wizard wiring
   document.getElementById('btn-send-money').addEventListener('click', () => {
-    if (!walletId) return showToast('Please set your wallet ID first.', 'error')
+    if (!walletId) return showToast('Please set your account number first.', 'error')
+    // Pre-fill from calculator
+    const calcVal = document.getElementById('calc-amount').value
+    if (calcVal) document.getElementById('send-amount').value = calcVal
     showSendStep(1)
     openModal('modal-send')
+    updateFeePreview()
   })
 
-  document.getElementById('btn-send-review').addEventListener('click', reviewSend)
+  document.getElementById('send-amount').addEventListener('input', updateFeePreview)
+  document.getElementById('btn-send-step2').addEventListener('click', goToStep2)
+  document.getElementById('btn-send-step3').addEventListener('click', goToStep3)
   document.getElementById('btn-send-confirm').addEventListener('click', confirmSend)
-  document.getElementById('btn-send-back').addEventListener('click', () => showSendStep(1))
+  document.getElementById('btn-send-back2').addEventListener('click', () => showSendStep(1))
+  document.getElementById('btn-send-back3').addEventListener('click', () => showSendStep(2))
   document.getElementById('btn-load-more').addEventListener('click', loadHistory)
+
+  document.querySelector('.nav-tab[data-tab="history"]')?.addEventListener('click', () => {
+    if (walletId && txRecords.length === 0) { txBookmark = ''; loadHistory() }
+  })
 })
 
-// ── Load Dashboard ────────────────────────────────────────
+function updateCalc() {
+  const amount = Number(document.getElementById('calc-amount').value)
+  if (!amount || amount <= 0) {
+    document.getElementById('calc-fee').textContent = '—'
+    document.getElementById('calc-receive').textContent = '—'
+    return
+  }
+  const fee = calcFee(amount)
+  document.getElementById('calc-fee').textContent = fmtCurrency(fee)
+  document.getElementById('calc-receive').textContent = fmtCurrency(amount - fee)
+}
+
+function updateFeePreview() {
+  const amount = Number(document.getElementById('send-amount').value)
+  const preview = document.getElementById('send-fee-preview')
+  if (!amount || amount <= 0) { preview.style.display = 'none'; return }
+  const fee = calcFee(amount)
+  preview.style.display = 'block'
+  document.getElementById('prev-send').textContent = fmtCurrency(amount)
+  document.getElementById('prev-fee').textContent = fmtCurrency(fee)
+  document.getElementById('prev-recv').textContent = fmtCurrency(amount - fee)
+}
+
 async function loadDashboard() {
-  document.getElementById('balance-wallet-id').textContent = 'Wallet: ' + walletId
+  document.getElementById('balance-wallet-id').textContent = 'Account: ' + walletId
   await loadBalance()
   await loadRecentTx()
 }
@@ -193,114 +263,95 @@ async function loadBalance() {
     const res = await apiFetch('GET', `/wallets/${encodeURIComponent(walletId)}/balance`, ORG)
     if (res.ok) {
       const bal = typeof res.data === 'object' ? (res.data.result ?? res.data) : res.data
-      el.textContent = fmtAmount(bal)
-    } else {
-      el.textContent = '—'
-      showToast(friendlyError(res.data), 'error')
-    }
-  } catch (err) {
-    el.textContent = '—'
-    showToast(err.message, 'error')
-  }
+      el.textContent = fmtCurrency(bal)
+    } else { el.textContent = '—'; showToast(friendlyError(res.data), 'error') }
+  } catch (err) { el.textContent = '—'; showToast(err.message, 'error') }
 }
 
 async function loadRecentTx() {
   const container = document.getElementById('recent-tx')
   try {
     const res = await apiFetch('GET', `/tokens/transactions?walletId=${encodeURIComponent(walletId)}&pageSize=5&bookmark=`, ORG)
-    if (res.ok) {
-      const records = res.data?.records ?? []
-      renderTxTable(container, records, walletId)
-    } else {
-      container.innerHTML = `<p class="hint">Could not load recent transactions.</p>`
-    }
-  } catch { container.innerHTML = `<p class="hint">Could not load recent transactions.</p>` }
+    if (res.ok) renderActivityList(container, res.data?.records ?? [], walletId)
+    else container.innerHTML = `<p class="hint">Could not load recent activity.</p>`
+  } catch { container.innerHTML = `<p class="hint">Could not load recent activity.</p>` }
 }
 
 async function loadHistory() {
   const container = document.getElementById('history-container')
-  if (!txBookmark && txRecords.length > 0) return  // already at end
-
   try {
     const res = await apiFetch('GET', `/tokens/transactions?walletId=${encodeURIComponent(walletId)}&pageSize=20&bookmark=${encodeURIComponent(txBookmark)}`, ORG)
     if (res.ok) {
       const page = res.data?.records ?? []
       txRecords = txBookmark ? [...txRecords, ...page] : page
       txBookmark = res.data?.bookmark ?? ''
-      renderTxTable(container, txRecords, walletId)
+      renderTxTable(container, txRecords, walletId, false)
       document.getElementById('btn-load-more').style.display = (txBookmark && page.length >= 20) ? 'inline-flex' : 'none'
-    } else {
-      showToast(friendlyError(res.data), 'error')
-    }
+    } else showToast(friendlyError(res.data), 'error')
   } catch (err) { showToast(err.message, 'error') }
 }
 
-// Trigger history load when tab is clicked
-document.addEventListener('DOMContentLoaded', () => {
-  document.querySelector('.nav-tab[data-tab="history"]')?.addEventListener('click', () => {
-    if (walletId && txRecords.length === 0) { txBookmark = ''; loadHistory() }
-  })
-})
-
-// ── Send Money Flow ───────────────────────────────────────
+// ── Send Wizard ───────────────────────────────────────────
 function showSendStep(n) {
   document.querySelectorAll('.modal-step').forEach(s => s.classList.remove('active'))
   document.getElementById(`send-step-${n}`).classList.add('active')
+  ;[1,2,3].forEach(i => {
+    const dot = document.getElementById(`dot-${i}`)
+    dot.classList.toggle('active', i === n)
+    dot.classList.toggle('done', i < n)
+  })
   clearAlert('send-step1-alert')
   clearAlert('send-step2-alert')
+  clearAlert('send-step3-alert')
 }
 
-function reviewSend() {
-  const toId = document.getElementById('send-to').value.trim()
+function goToStep2() {
   const amount = document.getElementById('send-amount').value.trim()
-  if (!toId) return setAlert('send-step1-alert', 'Please enter a recipient wallet ID.', 'error')
   if (!amount || Number(amount) <= 0) return setAlert('send-step1-alert', 'Please enter a valid amount.', 'error')
-
-  document.getElementById('confirm-from').textContent = walletId
-  document.getElementById('confirm-to').textContent = toId
-  document.getElementById('confirm-amount').textContent = fmtAmount(amount) + ' DSP'
   showSendStep(2)
+}
+
+function goToStep3() {
+  const toId = document.getElementById('send-to').value.trim()
+  if (!toId) return setAlert('send-step2-alert', 'Please enter the recipient account number.', 'error')
+  const amount = Number(document.getElementById('send-amount').value)
+  const fee = calcFee(amount)
+  document.getElementById('confirm-send').textContent = fmtCurrency(amount)
+  document.getElementById('confirm-fee').textContent = fmtCurrency(fee)
+  document.getElementById('confirm-recv').textContent = fmtCurrency(amount - fee)
+  document.getElementById('confirm-to').textContent = toId
+  showSendStep(3)
 }
 
 async function confirmSend() {
   const toId = document.getElementById('send-to').value.trim()
   const amount = document.getElementById('send-amount').value.trim()
   const btn = document.getElementById('btn-send-confirm')
-
   btn.disabled = true
   btn.innerHTML = '<span class="spinner"></span> Sending…'
-
   try {
     const res = await apiFetch('POST', '/tokens/transfer', ORG, {
       fromId: walletId, toId, amount: String(amount)
     })
     if (res.ok) {
       closeModal('modal-send')
-      showToast(`Successfully sent ${fmtAmount(amount)} DSP to ${toId}.`, 'success')
+      showToast(`Transfer of ${fmtCurrency(amount)} to ${toId} confirmed.`, 'success')
       document.getElementById('send-to').value = ''
       document.getElementById('send-amount').value = ''
+      document.getElementById('calc-amount').value = ''
+      updateCalc()
       await loadBalance()
       txRecords = []; txBookmark = ''; await loadRecentTx()
-    } else {
-      setAlert('send-step2-alert', friendlyError(res.data), 'error')
-    }
-  } catch (err) {
-    setAlert('send-step2-alert', err.message, 'error')
-  } finally {
-    btn.disabled = false
-    btn.textContent = 'Confirm Send'
-  }
+    } else setAlert('send-step3-alert', friendlyError(res.data), 'error')
+  } catch (err) { setAlert('send-step3-alert', err.message, 'error') }
+  finally { btn.disabled = false; btn.textContent = 'Confirm & Send' }
 }
 
-// ── Alert Helper ──────────────────────────────────────────
 function setAlert(id, msg, type) {
   const el = document.getElementById(id)
   if (el) el.innerHTML = `<div class="alert ${type}" style="margin-top:12px">${escHtml(msg)}</div>`
 }
-function clearAlert(id) {
-  const el = document.getElementById(id)
-  if (el) el.innerHTML = ''
-}
+function clearAlert(id) { const el = document.getElementById(id); if (el) el.innerHTML = '' }
 </script>
 </body>
 </html>

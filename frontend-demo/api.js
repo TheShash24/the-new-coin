@@ -1,4 +1,4 @@
-// ── Diaspora Platform — Shared API Client ─────────────────
+// ── Hawal Digital — Shared API Client ──────────────────────
 // Used by all dashboard pages. No rendering logic here.
 
 const API_BASE = 'http://localhost:8080'
@@ -29,7 +29,6 @@ async function apiFetch(method, path, org, body = null) {
     try { data = JSON.parse(text) } catch { /* keep as string */ }
     return { ok: res.ok, status: res.status, data }
   } catch (err) {
-    // Network-level failure (API not running, CORS etc.)
     throw new Error('Cannot reach the API. Make sure the server is running on port 8080.')
   }
 }
@@ -37,23 +36,46 @@ async function apiFetch(method, path, org, body = null) {
 // ── Error Message Mapper ──────────────────────────────────
 
 /**
- * friendlyError — translates raw API error strings to user-facing messages.
- * Keeps CBOS/admin pages somewhat technical while protecting end-users.
+ * friendlyError — translates raw API error strings to consumer-friendly messages.
  */
 function friendlyError(data) {
   const raw = (typeof data === 'string' ? data : (data?.error ?? '')).toLowerCase()
   if (!raw) return 'Something went wrong. Please try again.'
-  if (raw.includes('not found') || raw.includes('does not exist')) return 'Wallet not found. Check the ID and try again.'
-  if (raw.includes('frozen'))         return 'This wallet is frozen and cannot send or receive.'
-  if (raw.includes('insufficient') || raw.includes('balance'))  return 'Insufficient balance for this transaction.'
-  if (raw.includes('kyc') || raw.includes('tier'))  return 'This amount exceeds your KYC tier limit.'
-  if (raw.includes('role'))           return 'This operation is not allowed for this wallet type.'
-  if (raw.includes('already exists') || raw.includes('duplicate')) return 'This wallet ID is already in use. Choose a different ID.'
-  if (raw.includes('deposit') || raw.includes('ref')) return 'This deposit reference has already been used.'
-  if (raw.includes('self'))           return 'You cannot send to your own wallet.'
-  if (raw.includes('pending') || raw.includes('status')) return 'This burn request has already been processed.'
-  if (raw.includes('x-org-id'))       return 'Authentication error. Please reload the page.'
+  if (raw.includes('not found') || raw.includes('does not exist')) return 'Account not found. Check the number and try again.'
+  if (raw.includes('frozen'))                                       return 'This account has been restricted. Please contact support.'
+  if (raw.includes('insufficient') || raw.includes('balance'))      return "You don't have enough funds for this transfer."
+  if (raw.includes('kyc') || raw.includes('tier'))                  return 'This amount exceeds your verification limit.'
+  if (raw.includes('role'))                                         return "This action isn't available for your account type."
+  if (raw.includes('already exists') || raw.includes('duplicate'))  return 'This account number is already in use.'
+  if (raw.includes('deposit') || raw.includes('ref'))               return 'This deposit reference has already been used.'
+  if (raw.includes('self'))                                         return "You can't send to your own account."
+  if (raw.includes('pending') || raw.includes('status'))            return 'This request has already been processed.'
+  if (raw.includes('x-org-id'))                                     return 'Authentication error. Please reload the page.'
   return 'Something went wrong. Please try again.'
+}
+
+// ── Fee & Currency Helpers ────────────────────────────────
+
+/**
+ * calcFee — mirrors chaincode calculateFee (10 basis points, min 1).
+ * @param {number|string} amount
+ * @returns {number}
+ */
+function calcFee(amount) {
+  return Math.max(1, Math.ceil(Number(amount) * 10 / 10000))
+}
+
+/**
+ * fmtCurrency — formats a number as currency with symbol prefix.
+ * @param {number|string} amount
+ * @param {string} symbol
+ * @returns {string}  e.g. "£1,234.50"
+ */
+function fmtCurrency(amount, symbol = '£') {
+  return symbol + Number(amount).toLocaleString('en-GB', {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2
+  })
 }
 
 // ── Toast Notifications ───────────────────────────────────
@@ -71,8 +93,6 @@ function _getToastContainer() {
 
 /**
  * showToast — renders a notification toast that auto-dismisses after 4 s.
- * @param {string} msg    Message text
- * @param {'success'|'error'|'info'} type
  */
 function showToast(msg, type = 'info') {
   const icons = { success: '✓', error: '✕', info: 'ℹ' }
@@ -108,7 +128,6 @@ function closeModal(id) {
   if (el) el.classList.remove('open')
 }
 
-// Close modal on overlay click (not on modal content click)
 document.addEventListener('click', e => {
   if (e.target.classList.contains('modal-overlay')) {
     e.target.classList.remove('open')
@@ -141,7 +160,7 @@ function escHtml(s) {
 function fmtDate(isoStr) {
   if (!isoStr) return '—'
   try {
-    return new Date(isoStr).toLocaleString(undefined, {
+    return new Date(isoStr).toLocaleString('en-GB', {
       year:'numeric', month:'short', day:'numeric',
       hour:'2-digit', minute:'2-digit'
     })
@@ -164,10 +183,13 @@ function txTypePill(type) {
 
 function statusPill(status) {
   const s = (status ?? '').toLowerCase()
-  return `<span class="pill pill-${s}">${escHtml(status ?? '—')}</span>`
+  const map = { pending: 'processing', approved: 'approved', rejected: 'declined' }
+  const cls = map[s] ?? s
+  const label = map[s] ? (cls === 'processing' ? 'Processing' : cls === 'approved' ? 'Approved' : 'Declined') : (status ?? '—')
+  return `<span class="pill pill-${cls}">${escHtml(label)}</span>`
 }
 
-// ── Tab Switcher (used on sender/recipient/vendor pages) ──
+// ── Tab Switcher ──────────────────────────────────────────
 
 function initTabs() {
   document.querySelectorAll('.nav-tab').forEach(btn => {
@@ -181,7 +203,7 @@ function initTabs() {
   })
 }
 
-// ── Sidebar Switcher (used on CBOS page) ─────────────────
+// ── Sidebar Switcher (CBOS page) ──────────────────────────
 
 function initSidebar() {
   document.querySelectorAll('.sidebar-link').forEach(btn => {
@@ -195,15 +217,16 @@ function initSidebar() {
   })
 }
 
-// ── Build Transaction History Table ──────────────────────
+// ── Transaction History Table (CBOS / admin use) ──────────
 
 /**
- * renderTxTable — renders a transaction history table into container.
+ * renderTxTable — renders a full transaction table.
  * @param {HTMLElement} container
  * @param {Array} records
- * @param {string} myWalletId  — used to determine direction (in/out)
+ * @param {string} myWalletId
+ * @param {boolean} showType  — pass false on consumer pages
  */
-function renderTxTable(container, records, myWalletId) {
+function renderTxTable(container, records, myWalletId, showType = true) {
   if (!records || !records.length) {
     container.innerHTML = `
       <div class="empty-state">
@@ -218,23 +241,72 @@ function renderTxTable(container, records, myWalletId) {
     const counterpart = isOut ? tx.to : tx.from
     const sign = isOut ? '−' : '+'
     const signClass = isOut ? 'style="color:var(--error-text)"' : 'style="color:var(--success-text)"'
+    const typeCell = showType ? `<td>${txTypePill(tx.txType)}</td>` : ''
+    const feeCell = showType ? `<td>${tx.fee > 0 ? fmtAmount(tx.fee) + ' DSP' : '—'}</td>` : ''
     return `<tr>
       <td>${fmtDate(tx.timestamp)}</td>
-      <td>${txTypePill(tx.txType)}</td>
+      ${typeCell}
       <td class="tx-id" title="${escHtml(counterpart ?? '')}">${escHtml(truncId(counterpart, 18))}</td>
-      <td ${signClass}><strong>${sign}${fmtAmount(tx.amount)}</strong> DSP</td>
-      <td>${tx.fee > 0 ? fmtAmount(tx.fee) + ' DSP' : '—'}</td>
+      <td ${signClass}><strong>${sign}${fmtAmount(tx.amount)}</strong></td>
+      ${feeCell}
     </tr>`
   }).join('')
+
+  const typeHead = showType ? '<th>Type</th>' : ''
+  const feeHead = showType ? '<th>Fee</th>' : ''
+  const acctLabel = showType ? 'Account' : 'Account'
 
   container.innerHTML = `
     <div class="table-wrap">
       <table class="data-table">
         <thead><tr>
-          <th>Date</th><th>Type</th><th>Counterpart Wallet</th>
-          <th>Amount</th><th>Fee</th>
+          <th>Date</th>${typeHead}<th>${acctLabel}</th>
+          <th>Amount</th>${feeHead}
         </tr></thead>
         <tbody>${rows}</tbody>
       </table>
     </div>`
+}
+
+// ── Activity List (consumer pages — card style) ───────────
+
+/**
+ * renderActivityList — card-list variant for recent activity on consumer home tabs.
+ * @param {HTMLElement} container
+ * @param {Array} records
+ * @param {string} myWalletId
+ */
+function renderActivityList(container, records, myWalletId) {
+  if (!records || !records.length) {
+    container.innerHTML = `
+      <div class="empty-state">
+        <div class="empty-icon">📋</div>
+        <p>No recent activity.</p>
+      </div>`
+    return
+  }
+
+  container.innerHTML = records.slice(0, 5).map(tx => {
+    const isOut = tx.from === myWalletId
+    const counterpart = isOut ? (tx.to ?? '—') : (tx.from ?? '—')
+    const amountClass = isOut ? 'out' : 'in'
+    const sign = isOut ? '−' : '+'
+    const icon = isOut ? '↑' : '↓'
+    const iconClass = isOut ? 'out' : 'in'
+
+    // Status: use "Completed" for all settled txs on consumer pages
+    const statusLabel = 'Completed'
+
+    return `
+      <div class="activity-item">
+        <div class="activity-icon ${iconClass}">${icon}</div>
+        <div class="activity-body">
+          <div class="activity-title">${escHtml(truncId(counterpart, 20))}</div>
+          <div class="activity-date">${fmtDate(tx.timestamp)} · <span class="pill pill-completed">${statusLabel}</span></div>
+        </div>
+        <div class="activity-right">
+          <div class="activity-amount ${amountClass}">${sign}${fmtCurrency(tx.amount)}</div>
+        </div>
+      </div>`
+  }).join('')
 }

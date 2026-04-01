@@ -3,12 +3,12 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>CBOS Regulator — Diaspora Platform</title>
+  <title>CBOS — Regulatory Dashboard</title>
   <link rel="stylesheet" href="shared.css">
   <style>
-    :root { --page-primary: var(--cbos); --page-dark: var(--cbos-dark); --page-light: var(--cbos-light); }
+    :root { --page-primary: var(--cbos-red); --page-dark: var(--cbos-dark); --page-light: #fef2f2; }
 
-    body { background: var(--neutral-100); }
+    body { background: var(--dark-bg); }
 
     .wallet-lookup-card {
       background: var(--neutral-50);
@@ -20,23 +20,22 @@
     .wallet-lookup-card h4 { margin-bottom: 12px; color: var(--neutral-800); }
 
     .action-row { display: flex; gap: 10px; margin-top: 14px; flex-wrap: wrap; }
-
     .queue-row-actions { display: flex; gap: 8px; }
   </style>
 </head>
 <body>
 
-<!-- Topbar -->
-<header class="topbar">
-  <div class="topbar-logo">🌍 Diaspora Platform <span>Regulator</span></div>
-  <span class="role-badge">🏛️ CBOS Regulator &middot; Org3</span>
-  <a class="btn-logout" href="index.html">← Switch Role</a>
+<!-- Dark Topbar -->
+<header class="topbar topbar-dark">
+  <div class="topbar-logo">Hawal <span style="color:var(--cbos-red)">Digital</span> <span style="font-size:.8rem;font-weight:400;color:rgba(255,255,255,.5);margin-left:6px">Regulatory Portal</span></div>
+  <span class="role-badge" style="background:rgba(220,38,38,.2);color:#fca5a5;border-color:rgba(220,38,38,.3)">🏛️ CBOS Regulator</span>
+  <a class="btn-logout" href="index.html">← Back</a>
 </header>
 
 <!-- Sidebar Layout -->
 <div class="layout-sidebar">
 
-  <!-- Sidebar -->
+  <!-- Dark Sidebar -->
   <nav class="sidebar">
     <div class="sidebar-section">Dashboard</div>
     <button class="sidebar-link active" data-panel="overview">
@@ -44,14 +43,14 @@
     </button>
     <div class="sidebar-section">Operations</div>
     <button class="sidebar-link" data-panel="queue">
-      <span class="icon">📋</span> Exchange Queue
-      <span id="queue-badge" style="margin-left:auto;background:var(--cbos);color:#fff;border-radius:10px;font-size:.7rem;padding:1px 7px;display:none"></span>
+      <span class="icon">📋</span> Settlement Queue
+      <span id="queue-badge" style="margin-left:auto;background:var(--cbos-red);color:#fff;border-radius:10px;font-size:.7rem;padding:1px 7px;display:none"></span>
     </button>
     <button class="sidebar-link" data-panel="aml">
       <span class="icon">🔍</span> AML Monitoring
     </button>
     <button class="sidebar-link" data-panel="wallets">
-      <span class="icon">👁️</span> Wallet Controls
+      <span class="icon">👁️</span> Account Controls
     </button>
     <button class="sidebar-link" data-panel="fees">
       <span class="icon">💰</span> Fee Collection
@@ -73,44 +72,44 @@
 
       <div class="stat-grid">
         <div class="stat-card">
-          <div class="stat-label">Total Supply</div>
+          <div class="stat-label">Total Circulation</div>
           <div class="stat-value" id="stat-supply">—</div>
-          <div class="stat-unit">DSP Tokens in circulation</div>
+          <div class="stat-unit">GBP in active circulation</div>
         </div>
         <div class="stat-card">
-          <div class="stat-label">Pending Burns</div>
+          <div class="stat-label">Pending Settlements</div>
           <div class="stat-value" id="stat-pending">—</div>
           <div class="stat-unit">awaiting CBOS decision</div>
         </div>
         <div class="stat-card">
-          <div class="stat-label">CBOS Wallet Balance</div>
+          <div class="stat-label">Regulatory Fee Balance</div>
           <div class="stat-value" id="stat-cbos-balance">—</div>
-          <div class="stat-unit">DSP in fee pool</div>
+          <div class="stat-unit">accumulated in fee pool</div>
         </div>
       </div>
 
       <div class="card">
         <div class="card-body">
           <h3 style="margin-bottom:8px">Platform Status</h3>
-          <p style="font-size:.875rem">This dashboard provides real-time supervisory visibility over all token flows on the Sudan Blockchain Remittance Network. All statistics are read directly from the Hyperledger Fabric ledger.</p>
+          <p style="font-size:.875rem">This dashboard provides real-time supervisory visibility over all transaction flows on the Hawal Digital network. All statistics are read directly from the immutable ledger.</p>
           <hr class="divider">
           <div style="display:flex;gap:12px;flex-wrap:wrap">
-            <button class="btn btn-ghost btn-sm" onclick="showPanel('queue')">View Exchange Queue →</button>
+            <button class="btn btn-ghost btn-sm" onclick="showPanel('queue')">View Settlement Queue →</button>
             <button class="btn btn-ghost btn-sm" onclick="showPanel('fees')">Collect Fees →</button>
           </div>
         </div>
       </div>
     </div>
 
-    <!-- ── Exchange Queue Panel ────────────────────────── -->
+    <!-- ── Settlement Queue Panel ─────────────────────── -->
     <div class="tab-panel" id="panel-queue">
       <div class="section-header">
-        <h2>Exchange Queue</h2>
+        <h2>Settlement Queue</h2>
         <button class="btn btn-ghost btn-sm" id="btn-reload-queue">↻ Reload</button>
       </div>
-      <p style="margin-bottom:20px;font-size:.875rem">Pending vendor requests for foreign exchange release via Form IM. Each request requires CBOS approval before tokens are destroyed and hard currency released.</p>
+      <p style="margin-bottom:20px;font-size:.875rem">Pending merchant requests for foreign currency settlement. Each request requires CBOS approval before funds are released and tokens are retired.</p>
       <div id="queue-container">
-        <div class="empty-state"><div class="empty-icon">✅</div><p>No pending exchange requests.</p></div>
+        <div class="empty-state"><div class="empty-icon">✅</div><p>No pending settlement requests.</p></div>
       </div>
     </div>
 
@@ -123,7 +122,7 @@
           <p class="card-subtitle">Query all transactions above a threshold for anti-money laundering review.</p>
           <div style="display:flex;gap:12px;align-items:flex-end;flex-wrap:wrap">
             <div class="form-group" style="flex:0 0 200px;margin-bottom:0">
-              <label>Minimum amount (DSP)</label>
+              <label>Minimum amount (GBP)</label>
               <input type="number" id="aml-threshold" placeholder="e.g. 500" min="1">
             </div>
             <button class="btn btn-primary" id="btn-aml-search">Search</button>
@@ -133,16 +132,16 @@
       </div>
     </div>
 
-    <!-- ── Wallet Controls Panel ───────────────────────── -->
+    <!-- ── Account Controls Panel ─────────────────────── -->
     <div class="tab-panel" id="panel-wallets">
-      <div class="section-header"><h2>Wallet Controls</h2></div>
+      <div class="section-header"><h2>Account Controls</h2></div>
       <div class="card">
         <div class="card-body">
-          <h3 class="card-title">Wallet Lookup</h3>
-          <p class="card-subtitle">Look up any wallet on the network to view its status and take regulatory action.</p>
+          <h3 class="card-title">Account Lookup</h3>
+          <p class="card-subtitle">Look up any account on the network to view its status and take regulatory action.</p>
           <div style="display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap">
             <div class="form-group" style="flex:1;min-width:200px;margin-bottom:0">
-              <label>Wallet ID</label>
+              <label>Account number</label>
               <input type="text" id="lookup-wallet-id" placeholder="e.g. vendor-001">
             </div>
             <button class="btn btn-primary" id="btn-lookup">Look Up</button>
@@ -157,13 +156,13 @@
       <div class="section-header"><h2>Fee Collection</h2></div>
       <div class="card">
         <div class="card-body">
-          <h3 class="card-title">CBOS Fee Pool</h3>
-          <p class="card-subtitle">Collect all accumulated transaction fees (0.10% per transfer/payment) into the CBOS wallet. Fee entries are deleted atomically upon collection.</p>
+          <h3 class="card-title">Regulatory Fee Pool</h3>
+          <p class="card-subtitle">Collect all accumulated transaction fees (0.10% per transfer/payment) into the CBOS account. Fee entries are deleted atomically upon collection.</p>
           <div style="display:flex;align-items:center;gap:20px;margin:20px 0;flex-wrap:wrap">
             <div>
-              <div class="stat-label">Current CBOS Balance</div>
+              <div class="stat-label">Current Fee Balance</div>
               <div style="font-size:1.75rem;font-weight:700" id="fees-cbos-balance">—</div>
-              <div class="stat-unit">DSP Tokens</div>
+              <div class="stat-unit">GBP</div>
             </div>
           </div>
           <button class="btn btn-primary btn-lg" id="btn-collect-fees">💰 Collect All Fees</button>
@@ -175,36 +174,36 @@
   </div><!-- end .page-content -->
 </div><!-- end .layout-sidebar -->
 
-<!-- Approve Confirmation Modal -->
+<!-- Approve Settlement Modal -->
 <div class="modal-overlay" id="modal-approve">
   <div class="modal">
-    <h3 class="modal-title">Approve Exchange Request</h3>
-    <p class="modal-subtitle">This action is irreversible. Tokens will be permanently destroyed.</p>
+    <h3 class="modal-title">Approve Settlement Request</h3>
+    <p class="modal-subtitle">This action is irreversible. Tokens will be permanently retired from circulation.</p>
     <div class="confirm-detail" id="approve-detail"></div>
     <div class="alert warning" style="font-size:.875rem">
-      Approving this request will destroy the escrowed tokens and authorise release of equivalent hard currency.
+      Approving this request will retire the held tokens and authorise release of equivalent hard currency to the merchant.
     </div>
     <div id="approve-alert"></div>
     <div class="modal-footer">
       <button class="btn btn-neutral" onclick="closeModal('modal-approve')">Cancel</button>
-      <button class="btn btn-danger" id="btn-approve-confirm">Approve &amp; Destroy Tokens</button>
+      <button class="btn btn-danger" id="btn-approve-confirm">Approve Settlement</button>
     </div>
   </div>
 </div>
 
-<!-- Reject Confirmation Modal -->
+<!-- Decline Settlement Modal -->
 <div class="modal-overlay" id="modal-reject">
   <div class="modal">
-    <h3 class="modal-title">Reject Exchange Request</h3>
-    <p class="modal-subtitle">Tokens will be returned to the vendor's wallet.</p>
+    <h3 class="modal-title">Decline Settlement Request</h3>
+    <p class="modal-subtitle">Held funds will be returned to the merchant's account in full.</p>
     <div class="confirm-detail" id="reject-detail"></div>
     <div class="alert info" style="font-size:.875rem">
-      Rejecting this request will return the escrowed tokens to the vendor in full.
+      Declining this request will return all held funds to the merchant immediately.
     </div>
     <div id="reject-alert"></div>
     <div class="modal-footer">
       <button class="btn btn-neutral" onclick="closeModal('modal-reject')">Cancel</button>
-      <button class="btn btn-primary" id="btn-reject-confirm">Reject &amp; Return Tokens</button>
+      <button class="btn btn-primary" id="btn-reject-confirm">Decline &amp; Return Funds</button>
     </div>
   </div>
 </div>
@@ -214,7 +213,6 @@
 const ORG = 'Org3'
 let pendingActionId = null
 
-// ── Init ──────────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', () => {
   initSidebar()
   loadOverview()
@@ -235,7 +233,6 @@ document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('btn-approve-confirm').addEventListener('click', confirmApprove)
   document.getElementById('btn-reject-confirm').addEventListener('click', confirmReject)
 
-  // Load queue badge on sidebar panel switch
   document.querySelectorAll('.sidebar-link[data-panel="queue"]').forEach(btn => {
     btn.addEventListener('click', loadQueue)
   })
@@ -259,7 +256,6 @@ function showPanel(name) {
 async function loadOverview() {
   const btn = document.getElementById('btn-refresh')
   btn.disabled = true
-
   try {
     const [supplyRes, burnsRes, balRes] = await Promise.allSettled([
       apiFetch('GET', '/tokens/supply', ORG),
@@ -269,7 +265,7 @@ async function loadOverview() {
 
     if (supplyRes.status === 'fulfilled' && supplyRes.value.ok) {
       const v = supplyRes.value.data
-      document.getElementById('stat-supply').textContent = fmtAmount(
+      document.getElementById('stat-supply').textContent = fmtCurrency(
         typeof v === 'object' ? (v.result ?? v) : v
       )
     } else document.getElementById('stat-supply').textContent = '—'
@@ -285,43 +281,43 @@ async function loadOverview() {
 
     if (balRes.status === 'fulfilled' && balRes.value.ok) {
       const v = balRes.value.data
-      document.getElementById('stat-cbos-balance').textContent = fmtAmount(
+      document.getElementById('stat-cbos-balance').textContent = fmtCurrency(
         typeof v === 'object' ? (v.result ?? v) : v
       )
     } else document.getElementById('stat-cbos-balance').textContent = '—'
 
     document.getElementById('refresh-time').textContent =
       'Last refreshed: ' + new Date().toLocaleTimeString()
-  } catch { /* silent — individual stats already show — */ }
+  } catch { /* silent */ }
   finally { btn.disabled = false }
 }
 
-// ── Exchange Queue ─────────────────────────────────────────
+// ── Settlement Queue ──────────────────────────────────────
 async function loadQueue() {
   const container = document.getElementById('queue-container')
   container.innerHTML = '<p style="color:var(--neutral-400);font-size:.875rem;padding:12px 0">Loading…</p>'
   try {
     const res = await apiFetch('GET', '/burns?pageSize=50&bookmark=', ORG)
     if (!res.ok) {
-      container.innerHTML = `<div class="alert error">Could not load exchange queue.</div>`
+      container.innerHTML = `<div class="alert error">Could not load settlement queue.</div>`
       return
     }
     const records = res.data?.records ?? []
     if (!records.length) {
-      container.innerHTML = `<div class="empty-state"><div class="empty-icon">✅</div><p>No pending exchange requests.</p></div>`
+      container.innerHTML = `<div class="empty-state"><div class="empty-icon">✅</div><p>No pending settlement requests.</p></div>`
       return
     }
     const rows = records.map(r => `
       <tr>
         <td class="tx-id" title="${escHtml(r.id ?? '')}">${escHtml(truncId(r.id ?? '', 20))}</td>
         <td>${escHtml(r.vendorId ?? '—')}</td>
-        <td><strong>${fmtAmount(r.amount)}</strong> DSP</td>
+        <td><strong>${fmtCurrency(r.amount)}</strong></td>
         <td>${escHtml(r.burnRef ?? '—')}</td>
         <td>${fmtDate(r.initiatedAt)}</td>
         <td>
           <div class="queue-row-actions">
             <button class="btn btn-success btn-sm" onclick="openApprove('${escHtml(r.id ?? '')}','${escHtml(r.vendorId ?? '')}',${Number(r.amount)},'${escHtml(r.burnRef ?? '')}')">Approve</button>
-            <button class="btn btn-danger  btn-sm" onclick="openReject('${escHtml(r.id ?? '')}','${escHtml(r.vendorId ?? '')}',${Number(r.amount)})">Reject</button>
+            <button class="btn btn-danger  btn-sm" onclick="openReject('${escHtml(r.id ?? '')}','${escHtml(r.vendorId ?? '')}',${Number(r.amount)})">Decline</button>
           </div>
         </td>
       </tr>`).join('')
@@ -329,13 +325,12 @@ async function loadQueue() {
       <div class="table-wrap">
         <table class="data-table">
           <thead><tr>
-            <th>TX ID</th><th>Vendor</th><th>Amount</th>
-            <th>Form IM Ref</th><th>Submitted</th><th>Actions</th>
+            <th>Reference</th><th>Merchant</th><th>Amount</th>
+            <th>Invoice Ref</th><th>Submitted</th><th>Actions</th>
           </tr></thead>
           <tbody>${rows}</tbody>
         </table>
       </div>`
-    // Update sidebar badge
     const badge = document.getElementById('queue-badge')
     badge.textContent = records.length
     badge.style.display = 'inline-block'
@@ -347,10 +342,10 @@ async function loadQueue() {
 function openApprove(id, vendor, amount, burnRef) {
   pendingActionId = id
   document.getElementById('approve-detail').innerHTML = `
-    <div class="confirm-row"><span>TX ID</span><span class="tx-id">${escHtml(truncId(id, 24))}</span></div>
-    <div class="confirm-row"><span>Vendor</span><span>${escHtml(vendor)}</span></div>
-    <div class="confirm-row"><span>Amount to destroy</span><span>${fmtAmount(amount)} DSP</span></div>
-    <div class="confirm-row"><span>Form IM Ref</span><span>${escHtml(burnRef)}</span></div>`
+    <div class="confirm-row"><span>Request ID</span><span class="tx-id">${escHtml(truncId(id, 24))}</span></div>
+    <div class="confirm-row"><span>Merchant</span><span>${escHtml(vendor)}</span></div>
+    <div class="confirm-row"><span>Amount</span><span>${fmtCurrency(amount)}</span></div>
+    <div class="confirm-row"><span>Invoice Ref</span><span>${escHtml(burnRef)}</span></div>`
   document.getElementById('approve-alert').innerHTML = ''
   openModal('modal-approve')
 }
@@ -358,9 +353,9 @@ function openApprove(id, vendor, amount, burnRef) {
 function openReject(id, vendor, amount) {
   pendingActionId = id
   document.getElementById('reject-detail').innerHTML = `
-    <div class="confirm-row"><span>TX ID</span><span class="tx-id">${escHtml(truncId(id, 24))}</span></div>
-    <div class="confirm-row"><span>Vendor</span><span>${escHtml(vendor)}</span></div>
-    <div class="confirm-row"><span>Amount to return</span><span>${fmtAmount(amount)} DSP</span></div>`
+    <div class="confirm-row"><span>Request ID</span><span class="tx-id">${escHtml(truncId(id, 24))}</span></div>
+    <div class="confirm-row"><span>Merchant</span><span>${escHtml(vendor)}</span></div>
+    <div class="confirm-row"><span>Amount to return</span><span>${fmtCurrency(amount)}</span></div>`
   document.getElementById('reject-alert').innerHTML = ''
   openModal('modal-reject')
 }
@@ -373,7 +368,7 @@ async function confirmApprove() {
     const res = await apiFetch('POST', `/burns/${encodeURIComponent(pendingActionId)}/approve`, ORG)
     if (res.ok) {
       closeModal('modal-approve')
-      showToast('Burn approved. Tokens destroyed and hard currency release authorised.', 'success')
+      showToast('Settlement approved. Funds released and tokens retired from circulation.', 'success')
       loadQueue(); loadOverview()
     } else {
       document.getElementById('approve-alert').innerHTML =
@@ -382,18 +377,18 @@ async function confirmApprove() {
   } catch (err) {
     document.getElementById('approve-alert').innerHTML =
       `<div class="alert error" style="margin-top:12px">${escHtml(err.message)}</div>`
-  } finally { btn.disabled = false; btn.textContent = 'Approve & Destroy Tokens' }
+  } finally { btn.disabled = false; btn.textContent = 'Approve Settlement' }
 }
 
 async function confirmReject() {
   if (!pendingActionId) return
   const btn = document.getElementById('btn-reject-confirm')
-  btn.disabled = true; btn.innerHTML = '<span class="spinner"></span> Rejecting…'
+  btn.disabled = true; btn.innerHTML = '<span class="spinner"></span> Declining…'
   try {
     const res = await apiFetch('POST', `/burns/${encodeURIComponent(pendingActionId)}/reject`, ORG)
     if (res.ok) {
       closeModal('modal-reject')
-      showToast('Burn rejected. Tokens returned to vendor in full.', 'info')
+      showToast('Settlement declined. Funds returned to merchant in full.', 'info')
       loadQueue(); loadOverview()
     } else {
       document.getElementById('reject-alert').innerHTML =
@@ -402,7 +397,7 @@ async function confirmReject() {
   } catch (err) {
     document.getElementById('reject-alert').innerHTML =
       `<div class="alert error" style="margin-top:12px">${escHtml(err.message)}</div>`
-  } finally { btn.disabled = false; btn.textContent = 'Reject & Return Tokens' }
+  } finally { btn.disabled = false; btn.textContent = 'Decline & Return Funds' }
 }
 
 // ── AML Monitoring ────────────────────────────────────────
@@ -423,7 +418,7 @@ async function runAML() {
     }
     const records = res.data?.records ?? (Array.isArray(res.data) ? res.data : [])
     if (!records.length) {
-      container.innerHTML = `<div class="empty-state"><div class="empty-icon">🔍</div><p>No transactions found above ${fmtAmount(threshold)} DSP.</p></div>`
+      container.innerHTML = `<div class="empty-state"><div class="empty-icon">🔍</div><p>No transactions found above ${fmtCurrency(threshold)}.</p></div>`
       return
     }
     const rows = records.map(tx => `
@@ -432,7 +427,7 @@ async function runAML() {
         <td>${txTypePill(tx.txType)}</td>
         <td>${escHtml(tx.from ?? '—')}</td>
         <td>${escHtml(tx.to ?? '—')}</td>
-        <td><strong>${fmtAmount(tx.amount)}</strong> DSP</td>
+        <td><strong>${fmtCurrency(tx.amount)}</strong></td>
         <td>${fmtDate(tx.timestamp)}</td>
       </tr>`).join('')
     container.innerHTML = `
@@ -446,7 +441,7 @@ async function runAML() {
   } catch (err) { container.innerHTML = `<div class="alert error">${escHtml(err.message)}</div>` }
 }
 
-// ── Wallet Controls ───────────────────────────────────────
+// ── Account Controls ──────────────────────────────────────
 async function lookupWallet() {
   const id = document.getElementById('lookup-wallet-id').value.trim()
   const container = document.getElementById('wallet-lookup-result')
@@ -461,7 +456,7 @@ async function lookupWallet() {
     const w = res.data
     container.innerHTML = `
       <div class="wallet-lookup-card">
-        <h4>Wallet: ${escHtml(w.id ?? id)}</h4>
+        <h4>Account: ${escHtml(w.id ?? id)}</h4>
         <div class="wallet-detail">
           <div class="wallet-field">
             <span class="wallet-field-label">Role</span>
@@ -469,15 +464,15 @@ async function lookupWallet() {
           </div>
           <div class="wallet-field">
             <span class="wallet-field-label">Balance</span>
-            <span class="wallet-field-value">${fmtAmount(w.balance ?? 0)} DSP</span>
+            <span class="wallet-field-value">${fmtCurrency(w.balance ?? 0)}</span>
           </div>
           <div class="wallet-field">
-            <span class="wallet-field-label">KYC Tier</span>
+            <span class="wallet-field-label">Verification Level</span>
             <span class="wallet-field-value">${escHtml(String(w.kycTier ?? '—'))}</span>
           </div>
           <div class="wallet-field">
             <span class="wallet-field-label">Status</span>
-            <span class="wallet-field-value">${w.frozen ? '<span class="pill pill-frozen">Frozen</span>' : '<span class="pill pill-active">Active</span>'}</span>
+            <span class="wallet-field-value">${w.frozen ? '<span class="pill pill-declined">Restricted</span>' : '<span class="pill pill-completed">Active</span>'}</span>
           </div>
           <div class="wallet-field">
             <span class="wallet-field-label">Updated</span>
@@ -486,8 +481,8 @@ async function lookupWallet() {
         </div>
         <div class="action-row" id="wallet-action-row">
           ${!w.frozen
-            ? `<button class="btn btn-danger btn-sm" onclick="freezeWallet('${escHtml(w.id ?? id)}')">🔒 Freeze Wallet</button>`
-            : `<button class="btn btn-ghost btn-sm" onclick="unfreezeWallet('${escHtml(w.id ?? id)}')">🔓 Unfreeze Wallet</button>`
+            ? `<button class="btn btn-danger btn-sm" onclick="freezeWallet('${escHtml(w.id ?? id)}')">🔒 Restrict Account</button>`
+            : `<button class="btn btn-ghost btn-sm" onclick="unfreezeWallet('${escHtml(w.id ?? id)}')">🔓 Lift Restriction</button>`
           }
         </div>
       </div>`
@@ -499,7 +494,7 @@ async function lookupWallet() {
 async function freezeWallet(id) {
   try {
     const res = await apiFetch('POST', `/wallets/${encodeURIComponent(id)}/freeze`, ORG)
-    if (res.ok) { showToast(`Wallet "${id}" has been frozen.`, 'success'); lookupWallet() }
+    if (res.ok) { showToast(`Account "${id}" has been restricted.`, 'success'); lookupWallet() }
     else showToast(friendlyError(res.data), 'error')
   } catch (err) { showToast(err.message, 'error') }
 }
@@ -507,7 +502,7 @@ async function freezeWallet(id) {
 async function unfreezeWallet(id) {
   try {
     const res = await apiFetch('POST', `/wallets/${encodeURIComponent(id)}/unfreeze`, ORG)
-    if (res.ok) { showToast(`Wallet "${id}" has been unfrozen.`, 'success'); lookupWallet() }
+    if (res.ok) { showToast(`Account "${id}" restriction lifted.`, 'success'); lookupWallet() }
     else showToast(friendlyError(res.data), 'error')
   } catch (err) { showToast(err.message, 'error') }
 }
@@ -518,7 +513,7 @@ async function loadFeesBalance() {
     const res = await apiFetch('GET', '/wallets/CBOS_WALLET/balance', ORG)
     if (res.ok) {
       const v = res.data
-      document.getElementById('fees-cbos-balance').textContent = fmtAmount(
+      document.getElementById('fees-cbos-balance').textContent = fmtCurrency(
         typeof v === 'object' ? (v.result ?? v) : v
       )
     }
@@ -533,8 +528,8 @@ async function collectFees() {
   try {
     const res = await apiFetch('POST', '/fees/claim', ORG, { cbosWalletId: 'CBOS_WALLET' })
     if (res.ok) {
-      showToast('All accumulated fees collected into CBOS wallet.', 'success')
-      alertEl.innerHTML = `<div class="alert success">Fee collection successful. CBOS wallet balance updated.</div>`
+      showToast('All accumulated fees collected into CBOS account.', 'success')
+      alertEl.innerHTML = `<div class="alert success">Fee collection successful. Regulatory balance updated.</div>`
       loadFeesBalance(); loadOverview()
     } else {
       alertEl.innerHTML = `<div class="alert error">${escHtml(friendlyError(res.data))}</div>`

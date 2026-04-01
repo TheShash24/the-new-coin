@@ -3,186 +3,203 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Diaspora Remittance Platform</title>
+  <title>Hawal Digital — Send money to Sudan</title>
   <link rel="stylesheet" href="shared.css">
   <style>
-    body {
-      background: linear-gradient(135deg, #1a1a2e 0%, #16213e 60%, #0f3460 100%);
-      min-height: 100vh;
+    body { background: #fff; min-height: 100vh; }
+
+    .landing-topbar {
       display: flex;
-      flex-direction: column;
       align-items: center;
-      justify-content: center;
-      padding: 24px;
+      padding: 0 32px;
+      height: 60px;
+      border-bottom: 1px solid var(--border);
+      background: #fff;
     }
-
-    .login-container {
-      width: 100%;
-      max-width: 520px;
-    }
-
-    .login-header {
-      text-align: center;
-      margin-bottom: 36px;
-    }
-
-    .login-header .globe { font-size: 3rem; margin-bottom: 12px; display: block; }
-
-    .login-header h1 {
-      color: #fff;
-      font-size: 1.75rem;
+    .landing-logo {
+      font-size: 1.1rem;
       font-weight: 700;
-      margin-bottom: 6px;
+      color: var(--neutral-900);
+      letter-spacing: -.3px;
+      flex: 1;
     }
-
-    .login-header p {
-      color: rgba(255,255,255,.55);
-      font-size: .9375rem;
-    }
-
-    .login-header .network-badge {
-      display: inline-block;
-      background: rgba(255,255,255,.1);
-      border: 1px solid rgba(255,255,255,.2);
+    .landing-logo span { color: var(--green); }
+    .demo-badge {
+      background: #f0fdf4;
+      border: 1px solid #bbf7d0;
       border-radius: 20px;
-      color: rgba(255,255,255,.7);
+      color: var(--green-dark);
       font-size: .75rem;
-      font-weight: 500;
-      margin-top: 10px;
-      padding: 4px 14px;
+      font-weight: 600;
+      padding: 3px 12px;
     }
 
-    .role-prompt {
-      color: rgba(255,255,255,.6);
+    .hero {
+      text-align: center;
+      padding: 72px 24px 48px;
+      max-width: 680px;
+      margin: 0 auto;
+    }
+    .hero-eyebrow {
+      display: inline-block;
+      background: var(--green-light);
+      color: var(--green-dark);
+      font-size: .8125rem;
+      font-weight: 600;
+      border-radius: 20px;
+      padding: 4px 14px;
+      margin-bottom: 20px;
+    }
+    .hero h1 {
+      font-size: 2.5rem;
+      font-weight: 700;
+      line-height: 1.15;
+      color: var(--neutral-900);
+      margin-bottom: 16px;
+    }
+    .hero h1 .accent { color: var(--green); }
+    .hero p {
+      font-size: 1.0625rem;
+      color: var(--neutral-600);
+      margin-bottom: 32px;
+      line-height: 1.6;
+    }
+
+    .trust-chips {
+      display: flex;
+      justify-content: center;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-bottom: 52px;
+    }
+    .trust-chip {
+      background: var(--neutral-50);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      color: var(--neutral-700);
       font-size: .8125rem;
       font-weight: 500;
-      letter-spacing: .5px;
-      text-transform: uppercase;
-      margin-bottom: 14px;
-      text-align: center;
+      padding: 6px 14px;
     }
+    .trust-chip .chip-icon { margin-right: 5px; }
 
     .role-grid {
       display: grid;
       grid-template-columns: 1fr 1fr;
-      gap: 14px;
+      gap: 16px;
+      max-width: 700px;
+      margin: 0 auto;
+      padding: 0 24px 64px;
     }
+    @media (max-width: 520px) { .role-grid { grid-template-columns: 1fr; } }
 
     .role-card {
-      background: rgba(255,255,255,.07);
-      border: 1.5px solid rgba(255,255,255,.12);
-      border-radius: 14px;
-      cursor: pointer;
-      padding: 22px 18px;
-      text-align: left;
-      transition: background .15s, border-color .15s, transform .15s;
+      background: #fff;
+      border: 1.5px solid var(--border);
+      border-radius: 16px;
+      padding: 24px;
       text-decoration: none;
+      color: inherit;
+      cursor: pointer;
+      transition: border-color .15s, box-shadow .15s, transform .1s;
+      display: block;
     }
-
     .role-card:hover {
-      background: rgba(255,255,255,.13);
-      border-color: rgba(255,255,255,.25);
+      border-color: var(--green);
+      box-shadow: 0 4px 20px rgba(0,184,110,.12);
       transform: translateY(-2px);
     }
+    .role-card.merchant:hover  { border-color: var(--amber); box-shadow: 0 4px 20px rgba(245,158,11,.12); }
+    .role-card.regulator:hover { border-color: var(--cbos-red); box-shadow: 0 4px 20px rgba(220,38,38,.12); }
 
-    .role-icon { font-size: 1.75rem; margin-bottom: 10px; display: block; }
-
-    .role-name {
-      color: #fff;
+    .role-icon {
+      font-size: 1.75rem;
+      margin-bottom: 12px;
+      display: block;
+    }
+    .role-title {
       font-size: 1rem;
       font-weight: 700;
+      color: var(--neutral-900);
       margin-bottom: 4px;
     }
-
     .role-desc {
-      color: rgba(255,255,255,.55);
+      font-size: .875rem;
+      color: var(--neutral-600);
+      line-height: 1.5;
+      margin-bottom: 16px;
+    }
+    .role-cta {
       font-size: .8125rem;
-      line-height: 1.4;
-      margin-bottom: 10px;
-    }
-
-    .role-org {
-      display: inline-block;
-      border-radius: 10px;
-      font-size: .7rem;
       font-weight: 600;
-      padding: 2px 9px;
-      text-transform: uppercase;
-      letter-spacing: .3px;
+      color: var(--green);
     }
+    .role-card.merchant .role-cta  { color: var(--amber-dark); }
+    .role-card.regulator .role-cta { color: var(--cbos-red); }
 
-    .role-card.bank-a  { border-top: 3px solid var(--bank-a); }
-    .role-card.bank-a .role-org { background: rgba(26,115,232,.25); color: #93c5fd; }
-
-    .role-card.bank-b  { border-top: 3px solid var(--bank-b); }
-    .role-card.bank-b .role-org { background: rgba(11,128,67,.25); color: #6ee7b7; }
-
-    .role-card.cbos    { border-top: 3px solid var(--cbos); }
-    .role-card.cbos .role-org  { background: rgba(198,40,40,.25);  color: #fca5a5; }
-
-    .login-footer {
-      color: rgba(255,255,255,.25);
-      font-size: .75rem;
-      margin-top: 28px;
+    .footer-note {
       text-align: center;
+      color: var(--neutral-400);
+      font-size: .8125rem;
+      padding-bottom: 32px;
     }
-
-    .login-footer a {
-      color: rgba(255,255,255,.4);
-      text-decoration: underline;
-    }
-
-    @media (max-width: 480px) {
-      .role-grid { grid-template-columns: 1fr; }
-    }
+    .footer-note a { color: var(--neutral-500); }
   </style>
 </head>
 <body>
 
-<div class="login-container">
-  <div class="login-header">
-    <span class="globe">🌍</span>
-    <h1>Diaspora Remittance Platform</h1>
-    <p>Blockchain-based remittances for Sudan</p>
-    <span class="network-badge">Hyperledger Fabric 2.5 · Prototype</span>
+<div class="landing-topbar">
+  <div class="landing-logo">Hawal <span>Digital</span></div>
+  <span class="demo-badge">Demo</span>
+</div>
+
+<div class="hero">
+  <span class="hero-eyebrow">Sudan Remittance Platform</span>
+  <h1>Send money to Sudan<br><span class="accent">fast, secure, transparent</span></h1>
+  <p>Send funds to your family in Sudan instantly, with low fees and full visibility of every transfer. Powered by regulated financial infrastructure.</p>
+  <div class="trust-chips">
+    <span class="trust-chip"><span class="chip-icon">💸</span>Low fees — 0.10%</span>
+    <span class="trust-chip"><span class="chip-icon">⚡</span>Near-instant settlement</span>
+    <span class="trust-chip"><span class="chip-icon">🔒</span>Regulated &amp; secure</span>
+    <span class="trust-chip"><span class="chip-icon">📱</span>No paperwork needed</span>
   </div>
+</div>
 
-  <p class="role-prompt">I am a&hellip;</p>
+<div class="role-grid">
 
-  <div class="role-grid">
-    <a class="role-card bank-a" href="sender.html">
-      <span class="role-icon">✈️</span>
-      <div class="role-name">Diaspora Sender</div>
-      <div class="role-desc">Send money home from the UK. Mint-backed deposit tokens.</div>
-      <span class="role-org">Bank A · Org1</span>
-    </a>
+  <a class="role-card" href="sender.html">
+    <span class="role-icon">✈️</span>
+    <div class="role-title">Sending money abroad?</div>
+    <div class="role-desc">Send funds from the UK to your family in Sudan. Track your transfer and see the exact amount they'll receive.</div>
+    <div class="role-cta">I'm a sender →</div>
+  </a>
 
-    <a class="role-card bank-b" href="recipient.html">
-      <span class="role-icon">🏠</span>
-      <div class="role-name">Recipient</div>
-      <div class="role-desc">Receive funds in Sudan and pay local vendors.</div>
-      <span class="role-org">Bank B · Org2</span>
-    </a>
+  <a class="role-card" href="recipient.html">
+    <span class="role-icon">🏠</span>
+    <div class="role-title">Received money from family?</div>
+    <div class="role-desc">Check your balance and pay local merchants directly from your Hawal Digital account.</div>
+    <div class="role-cta">I'm a recipient →</div>
+  </a>
 
-    <a class="role-card bank-b" href="vendor.html">
-      <span class="role-icon">🏪</span>
-      <div class="role-name">Vendor</div>
-      <div class="role-desc">Accept payments and request foreign exchange release.</div>
-      <span class="role-org">Bank B · Org2</span>
-    </a>
+  <a class="role-card merchant" href="vendor.html">
+    <span class="role-icon">🏪</span>
+    <div class="role-title">Running a local business?</div>
+    <div class="role-desc">Accept digital payments from customers and request settlement to hard currency via the Central Bank.</div>
+    <div class="role-cta">Business account →</div>
+  </a>
 
-    <a class="role-card cbos" href="cbos.html">
-      <span class="role-icon">🏛️</span>
-      <div class="role-name">CBOS Regulator</div>
-      <div class="role-desc">Central Bank of Sudan — supervise flows, approve burns, monitor AML.</div>
-      <span class="role-org">CBOS · Org3</span>
-    </a>
-  </div>
+  <a class="role-card regulator" href="cbos.html">
+    <span class="role-icon">🏛️</span>
+    <div class="role-title">Central Bank of Sudan</div>
+    <div class="role-desc">Regulatory oversight dashboard for monitoring circulation, AML screening, and approving settlement requests.</div>
+    <div class="role-cta">Regulator portal →</div>
+  </a>
 
-  <p class="login-footer">
-    Master's thesis prototype &mdash; no real authentication &mdash;
-    <a href="admin.html?admin=true">Admin Setup</a>
-  </p>
+</div>
+
+<div class="footer-note">
+  Secured by blockchain technology &nbsp;·&nbsp;
+  <a href="admin.html?admin=true">Admin Setup</a>
 </div>
 
 </body>
