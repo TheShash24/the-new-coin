@@ -181,11 +181,16 @@ function txTypePill(type) {
   return `<span class="pill pill-${t}">${escHtml(type ?? '—')}</span>`
 }
 
+const STATUS_MAP = {
+  pending:  { cls: 'processing', label: 'Processing' },
+  approved: { cls: 'approved',   label: 'Approved'   },
+  rejected: { cls: 'declined',   label: 'Declined'   },
+}
+
 function statusPill(status) {
-  const s = (status ?? '').toLowerCase()
-  const map = { pending: 'processing', approved: 'approved', rejected: 'declined' }
-  const cls = map[s] ?? s
-  const label = map[s] ? (cls === 'processing' ? 'Processing' : cls === 'approved' ? 'Approved' : 'Declined') : (status ?? '—')
+  const entry = STATUS_MAP[(status ?? '').toLowerCase()]
+  const cls   = entry ? entry.cls   : (status ?? '').toLowerCase()
+  const label = entry ? entry.label : (status ?? '—')
   return `<span class="pill pill-${cls}">${escHtml(label)}</span>`
 }
 
@@ -239,28 +244,27 @@ function renderTxTable(container, records, myWalletId, showType = true) {
   const rows = records.map(tx => {
     const isOut = tx.from === myWalletId
     const counterpart = isOut ? tx.to : tx.from
-    const sign = isOut ? '−' : '+'
-    const signClass = isOut ? 'style="color:var(--error-text)"' : 'style="color:var(--success-text)"'
+    const dir      = isOut ? 'out' : 'in'
+    const sign     = isOut ? '−' : '+'
     const typeCell = showType ? `<td>${txTypePill(tx.txType)}</td>` : ''
-    const feeCell = showType ? `<td>${tx.fee > 0 ? fmtAmount(tx.fee) + ' DSP' : '—'}</td>` : ''
+    const feeCell  = showType ? `<td>${tx.fee > 0 ? fmtAmount(tx.fee) + ' DSP' : '—'}</td>` : ''
     return `<tr>
       <td>${fmtDate(tx.timestamp)}</td>
       ${typeCell}
       <td class="tx-id" title="${escHtml(counterpart ?? '')}">${escHtml(truncId(counterpart, 18))}</td>
-      <td ${signClass}><strong>${sign}${fmtAmount(tx.amount)}</strong></td>
+      <td class="activity-amount ${dir}"><strong>${sign}${fmtAmount(tx.amount)}</strong></td>
       ${feeCell}
     </tr>`
   }).join('')
 
   const typeHead = showType ? '<th>Type</th>' : ''
-  const feeHead = showType ? '<th>Fee</th>' : ''
-  const acctLabel = showType ? 'Account' : 'Account'
+  const feeHead  = showType ? '<th>Fee</th>'  : ''
 
   container.innerHTML = `
     <div class="table-wrap">
       <table class="data-table">
         <thead><tr>
-          <th>Date</th>${typeHead}<th>${acctLabel}</th>
+          <th>Date</th>${typeHead}<th>Account</th>
           <th>Amount</th>${feeHead}
         </tr></thead>
         <tbody>${rows}</tbody>
@@ -287,25 +291,21 @@ function renderActivityList(container, records, myWalletId) {
   }
 
   container.innerHTML = records.slice(0, 5).map(tx => {
-    const isOut = tx.from === myWalletId
+    const isOut       = tx.from === myWalletId
+    const dir         = isOut ? 'out' : 'in'
     const counterpart = isOut ? (tx.to ?? '—') : (tx.from ?? '—')
-    const amountClass = isOut ? 'out' : 'in'
-    const sign = isOut ? '−' : '+'
-    const icon = isOut ? '↑' : '↓'
-    const iconClass = isOut ? 'out' : 'in'
-
-    // Status: use "Completed" for all settled txs on consumer pages
-    const statusLabel = 'Completed'
+    const sign        = isOut ? '−' : '+'
+    const icon        = isOut ? '↑' : '↓'
 
     return `
       <div class="activity-item">
-        <div class="activity-icon ${iconClass}">${icon}</div>
+        <div class="activity-icon ${dir}">${icon}</div>
         <div class="activity-body">
           <div class="activity-title">${escHtml(truncId(counterpart, 20))}</div>
-          <div class="activity-date">${fmtDate(tx.timestamp)} · <span class="pill pill-completed">${statusLabel}</span></div>
+          <div class="activity-date">${fmtDate(tx.timestamp)} · <span class="pill pill-completed">Completed</span></div>
         </div>
         <div class="activity-right">
-          <div class="activity-amount ${amountClass}">${sign}${fmtCurrency(tx.amount)}</div>
+          <div class="activity-amount ${dir}">${sign}${fmtCurrency(tx.amount)}</div>
         </div>
       </div>`
   }).join('')
