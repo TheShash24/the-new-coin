@@ -736,6 +736,79 @@ func TestGetBalance(t *testing.T) {
 }
 
 // ============================================================
+// Fix tests
+// ============================================================
+
+func TestTransfer_KYCTier1Exceeded(t *testing.T) {
+	ctx := newCtx(MSPOrg1, "user1", "tx1")
+	sc := new(SmartContract)
+	mustPutWallet(ctx.Stub, &Wallet{
+		ID: "diaspora1", Role: RoleDiaspora, Owner: "user1",
+		Balance: 5000, KYCTier: 1, DocType: DocTypeWallet,
+	})
+	mustPutWallet(ctx.Stub, &Wallet{
+		ID: "relative1", Role: RoleRelative, Owner: "user2",
+		Balance: 0, KYCTier: 3, DocType: DocTypeWallet,
+	})
+	err := sc.Transfer(ctx, "diaspora1", "relative1", KYCTier1MaxAmount+1)
+	if err == nil {
+		t.Fatal("expected error for KYC tier 1 limit exceeded, got nil")
+	}
+}
+
+func TestTransfer_ToSelf(t *testing.T) {
+	ctx := newCtx(MSPOrg1, "user1", "tx1")
+	sc := new(SmartContract)
+	mustPutWallet(ctx.Stub, &Wallet{
+		ID: "diaspora1", Role: RoleDiaspora, Owner: "user1",
+		Balance: 2000, KYCTier: 3, DocType: DocTypeWallet,
+	})
+	err := sc.Transfer(ctx, "diaspora1", "diaspora1", 100)
+	if err == nil {
+		t.Fatal("expected error for self-transfer, got nil")
+	}
+}
+
+func TestPayVendor_ToSelf(t *testing.T) {
+	ctx := newCtx(MSPOrg2, "user2", "tx1")
+	sc := new(SmartContract)
+	mustPutWallet(ctx.Stub, &Wallet{
+		ID: "rel1", Role: RoleRelative, Owner: "user2",
+		Balance: 2000, KYCTier: 3, DocType: DocTypeWallet,
+	})
+	err := sc.PayVendor(ctx, "rel1", "rel1", 100)
+	if err == nil {
+		t.Fatal("expected error for self-payment, got nil")
+	}
+}
+
+func TestMintTokens_ToRelativeWallet(t *testing.T) {
+	ctx := newCtx(MSPOrg1, "bank1", "tx1")
+	sc := new(SmartContract)
+	mustPutWallet(ctx.Stub, &Wallet{
+		ID: "rel1", Role: RoleRelative, Owner: "bank1",
+		Balance: 0, KYCTier: 3, DocType: DocTypeWallet,
+	})
+	err := sc.MintTokens(ctx, "rel1", 1000, "DEP-002")
+	if err == nil {
+		t.Fatal("expected error for minting to RELATIVE wallet, got nil")
+	}
+}
+
+func TestMintTokens_FrozenWallet(t *testing.T) {
+	ctx := newCtx(MSPOrg1, "bank1", "tx1")
+	sc := new(SmartContract)
+	mustPutWallet(ctx.Stub, &Wallet{
+		ID: "w1", Role: RoleDiaspora, Owner: "bank1",
+		Balance: 0, KYCTier: 3, Frozen: true, DocType: DocTypeWallet,
+	})
+	err := sc.MintTokens(ctx, "w1", 1000, "DEP-003")
+	if err == nil {
+		t.Fatal("expected error for minting to frozen wallet, got nil")
+	}
+}
+
+// ============================================================
 // Empty string inputs test
 // ============================================================
 

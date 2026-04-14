@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"math"
+	"strconv"
 	"time"
 
 	"github.com/hyperledger/fabric-contract-api-go/v2/contractapi"
@@ -98,16 +99,20 @@ type Wallet struct {
 
 // Transaction — key: TX:{txID}
 type Transaction struct {
-	Amount       int64    `json:"amount"`
-	DepositRef   string   `json:"depositRef"`  // populated on MINT only
-	DocType      string   `json:"docType"`
-	Fee          int64    `json:"fee"`
-	From         string   `json:"from"`
-	Participants []string `json:"participants"` // enables $elemMatch CouchDB query — Bug 4 fix
-	Timestamp    string   `json:"timestamp"`
-	To           string   `json:"to"`
-	TxID         string   `json:"txId"`
-	TxType       string   `json:"txType"`
+	Amount           int64    `json:"amount"`
+	DepositRef       string   `json:"depositRef"`        // populated on MINT only
+	DocType          string   `json:"docType"`
+	ExchangeRate     string   `json:"exchangeRate"`      // populated on MINT only; rate used, stored as string
+	Fee              int64    `json:"fee"`
+	From             string   `json:"from"`
+	Memo             string   `json:"memo"`              // optional free-text audit note; populated on TRANSFER/PAYMENT
+	OriginalAmount   int64    `json:"originalAmount"`    // populated on MINT only; amount in sender's currency
+	OriginalCurrency string   `json:"originalCurrency"`  // populated on MINT only; e.g. "GBP", "SAR", "EUR"
+	Participants     []string `json:"participants"`      // enables $elemMatch CouchDB query — Bug 4 fix
+	Timestamp        string   `json:"timestamp"`
+	To               string   `json:"to"`
+	TxID             string   `json:"txId"`
+	TxType           string   `json:"txType"`
 }
 
 // BurnRequest — key: BURN:{txID}
@@ -421,7 +426,10 @@ func (s *SmartContract) RegisterWallet(ctx contractapi.TransactionContextInterfa
 // MintTokens credits tokens to a wallet against a verified bank deposit.
 // Restricted to Org1MSP (Bank A) — all deposits originate on the diaspora side.
 // C2 fix: depositRef uniqueness enforced via composite key to prevent double-minting.
-func (s *SmartContract) MintTokens(ctx contractapi.TransactionContextInterface, walletID string, amount int64, depositRef string) error {
+// amount is the USD-equivalent token amount (conversion happens at the API layer).
+// opts is an optional triplet: [originalCurrency, originalAmount, exchangeRate].
+// If omitted or originalCurrency is empty, originalCurrency defaults to "USD".
+func (s *SmartContract) MintTokens(ctx contractapi.TransactionContextInterface, walletID string, amount int64, depositRef string, opts ...string) error {
 	// L1: empty string validation
 	if walletID == "" {
 		return fmt.Errorf("walletID cannot be empty")
@@ -472,18 +480,40 @@ func (s *SmartContract) MintTokens(ctx contractapi.TransactionContextInterface, 
 	if err := updateTotalSupply(ctx, amount); err != nil {
 		return err
 	}
+	var originalCurrency string
+	var originalAmount int64
+	var exchangeRate string
+	if len(opts) >= 1 {
+		originalCurrency = opts[0]
+	}
+	if len(opts) >= 2 {
+		v, err := strconv.ParseInt(opts[1], 10, 64)
+		if err != nil {
+			return fmt.Errorf("invalid originalAmount %q: %w", opts[1], err)
+		}
+		originalAmount = v
+	}
+	if len(opts) >= 3 {
+		exchangeRate = opts[2]
+	}
+	if originalCurrency == "" {
+		originalCurrency = "USD"
+	}
 	txID := ctx.GetStub().GetTxID()
 	tx := &Transaction{
-		Amount:       amount,
-		DepositRef:   depositRef,
-		DocType:      DocTypeTransaction,
-		Fee:          0,
-		From:         "",
-		Participants: []string{walletID},
-		Timestamp:    ts,
-		To:           walletID,
-		TxID:         txID,
-		TxType:       TxTypeMint,
+		Amount:           amount,
+		DepositRef:       depositRef,
+		DocType:          DocTypeTransaction,
+		ExchangeRate:     exchangeRate,
+		Fee:              0,
+		From:             "",
+		OriginalAmount:   originalAmount,
+		OriginalCurrency: originalCurrency,
+		Participants:     []string{walletID},
+		Timestamp:        ts,
+		To:               walletID,
+		TxID:             txID,
+		TxType:           TxTypeMint,
 	}
 	return saveTx(ctx, tx)
 }
@@ -496,7 +526,8 @@ func (s *SmartContract) MintTokens(ctx contractapi.TransactionContextInterface, 
 // C4 fix: enforces role constraints — sender must be DIASPORA, recipient must be RELATIVE.
 // M1 fix: recipient frozen status checked.
 // M3 fix: integer overflow guard on amount + fee.
-func (s *SmartContract) Transfer(ctx contractapi.TransactionContextInterface, fromID string, toID string, amount int64) error {
+// opts[0]: optional memo string stored on the transaction record for audit purposes.
+func (s *SmartContract) Transfer(ctx contractapi.TransactionContextInterface, fromID string, toID string, amount int64, opts ...string) error {
 	// L1: empty string validation
 	if fromID == "" {
 		return fmt.Errorf("fromID cannot be empty")
@@ -578,6 +609,10 @@ func (s *SmartContract) Transfer(ctx contractapi.TransactionContextInterface, fr
 	if err := saveWallet(ctx, toWallet); err != nil {
 		return err
 	}
+	var memo string
+	if len(opts) >= 1 {
+		memo = opts[0]
+	}
 	txID := ctx.GetStub().GetTxID()
 	// Bug 2 fix: fee stored as FeeEntry composite key, not direct credit to CBOS wallet
 	if err := saveFeeEntry(ctx, txID, fee, fromID, ts); err != nil {
@@ -588,6 +623,7 @@ func (s *SmartContract) Transfer(ctx contractapi.TransactionContextInterface, fr
 		DocType:      DocTypeTransaction,
 		Fee:          fee,
 		From:         fromID,
+		Memo:         memo,
 		Participants: []string{fromID, toID},
 		Timestamp:    ts,
 		To:           toID,
@@ -604,7 +640,8 @@ func (s *SmartContract) Transfer(ctx contractapi.TransactionContextInterface, fr
 // PayVendor transfers tokens from a RELATIVE wallet to a VENDOR wallet.
 // C5 fix: enforces RELATIVE role on payer.
 // KYC tier limits: Tier 1 ≤ 1,000 tokens, Tier 2 ≤ 10,000 tokens, Tier 3 unlimited.
-func (s *SmartContract) PayVendor(ctx contractapi.TransactionContextInterface, fromID string, toID string, amount int64) error {
+// opts[0]: optional memo string stored on the transaction record for audit purposes.
+func (s *SmartContract) PayVendor(ctx contractapi.TransactionContextInterface, fromID string, toID string, amount int64, opts ...string) error {
 	// L1: empty string validation
 	if fromID == "" {
 		return fmt.Errorf("fromID cannot be empty")
@@ -685,6 +722,10 @@ func (s *SmartContract) PayVendor(ctx contractapi.TransactionContextInterface, f
 	if err := saveWallet(ctx, toWallet); err != nil {
 		return err
 	}
+	var memo string
+	if len(opts) >= 1 {
+		memo = opts[0]
+	}
 	txID := ctx.GetStub().GetTxID()
 	if err := saveFeeEntry(ctx, txID, fee, fromID, ts); err != nil {
 		return err
@@ -694,6 +735,7 @@ func (s *SmartContract) PayVendor(ctx contractapi.TransactionContextInterface, f
 		DocType:      DocTypeTransaction,
 		Fee:          fee,
 		From:         fromID,
+		Memo:         memo,
 		Participants: []string{fromID, toID},
 		Timestamp:    ts,
 		To:           toID,
