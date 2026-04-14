@@ -15,9 +15,12 @@ func (s *Server) handleMintTokens(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	var body struct {
-		WalletID   string `json:"walletId"`
-		Amount     string `json:"amount"`
-		DepositRef string `json:"depositRef"`
+		WalletID         string `json:"walletId"`
+		Amount           string `json:"amount"`
+		DepositRef       string `json:"depositRef"`
+		OriginalCurrency string `json:"originalCurrency"`
+		OriginalAmount   string `json:"originalAmount"`
+		ExchangeRate     string `json:"exchangeRate"`
 	}
 	if !decodeBody(w, r, &body) {
 		return
@@ -26,7 +29,13 @@ func (s *Server) handleMintTokens(w http.ResponseWriter, r *http.Request) {
 		writeError(w, http.StatusBadRequest, "walletId, amount, and depositRef are required")
 		return
 	}
-	result, ok := submit(w, conn.Contract(), "MintTokens", body.WalletID, body.Amount, body.DepositRef)
+	var result []byte
+	var ok bool
+	if body.OriginalCurrency != "" {
+		result, ok = submit(w, conn.Contract(), "MintTokens", body.WalletID, body.Amount, body.DepositRef, body.OriginalCurrency, body.OriginalAmount, body.ExchangeRate)
+	} else {
+		result, ok = submit(w, conn.Contract(), "MintTokens", body.WalletID, body.Amount, body.DepositRef)
+	}
 	if !ok {
 		return
 	}

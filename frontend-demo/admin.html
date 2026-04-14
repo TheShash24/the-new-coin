@@ -213,22 +213,33 @@
     </div>
     <div class="admin-section-body">
       <p style="font-size:.875rem;color:var(--neutral-600);margin-bottom:16px">
-        Org1 only. Mints tokens against a verified bank deposit. The deposit reference is stored permanently on-chain and cannot be reused.
+        Org1 only. Enter the deposit amount in the sender's currency — the system converts to USD tokens automatically. The deposit reference is stored permanently on-chain and cannot be reused.
       </p>
       <div class="form-row">
         <div class="form-group">
           <label>Wallet ID</label>
           <input type="text" id="mint-wallet" placeholder="e.g. diaspora-001">
         </div>
+        <div class="form-group" style="max-width:120px">
+          <label>Currency</label>
+          <select id="mint-currency" style="height:38px;border:1px solid var(--border);border-radius:var(--radius);padding:0 8px;font-size:.875rem;width:100%">
+            <option value="GBP">GBP</option>
+            <option value="EUR">EUR</option>
+            <option value="SAR">SAR</option>
+            <option value="AED">AED</option>
+            <option value="USD">USD</option>
+          </select>
+        </div>
         <div class="form-group" style="max-width:140px">
           <label>Amount</label>
-          <input type="number" id="mint-amount" placeholder="e.g. 1000" min="1">
+          <input type="number" id="mint-original-amount" placeholder="e.g. 500" min="1">
         </div>
         <div class="form-group">
           <label>Deposit Reference</label>
           <input type="text" id="mint-ref" placeholder="e.g. DEP-2024-001">
         </div>
       </div>
+      <div id="mint-preview" style="display:none;margin-bottom:16px;padding:12px 16px;background:var(--neutral-50);border:1px solid var(--border);border-radius:var(--radius);font-size:.875rem;color:var(--neutral-700)"></div>
       <button class="btn" style="background:var(--neutral-900);color:#fff" id="btn-mint">Mint Tokens (Org1)</button>
       <div class="response-box" id="res-mint"></div>
     </div>
@@ -322,17 +333,45 @@ document.getElementById('btn-register').addEventListener('click', async () => {
 })
 
 // ── Mint Tokens ────────────────────────────────────────────
+const EXCHANGE_RATES = { GBP: 1.27, EUR: 1.09, SAR: 0.27, AED: 0.27, USD: 1.00 }
+
+function updateMintPreview() {
+  const currency = document.getElementById('mint-currency').value
+  const originalAmount = parseFloat(document.getElementById('mint-original-amount').value)
+  const preview = document.getElementById('mint-preview')
+  if (!currency || !originalAmount || originalAmount <= 0) { preview.style.display = 'none'; return }
+  const rate = EXCHANGE_RATES[currency]
+  const usdAmount = Math.floor(originalAmount * rate)
+  preview.style.display = 'block'
+  preview.innerHTML = `<strong>${originalAmount} ${currency}</strong> × ${rate} (${currency}/USD) = <strong>${usdAmount} USD = ${usdAmount} tokens</strong>`
+}
+
+document.getElementById('mint-currency').addEventListener('change', updateMintPreview)
+document.getElementById('mint-original-amount').addEventListener('input', updateMintPreview)
+
 document.getElementById('btn-mint').addEventListener('click', async () => {
   const walletId = document.getElementById('mint-wallet').value.trim()
-  const amount = document.getElementById('mint-amount').value.trim()
+  const currency = document.getElementById('mint-currency').value
+  const originalAmount = parseFloat(document.getElementById('mint-original-amount').value)
   const depositRef = document.getElementById('mint-ref').value.trim()
-  if (!walletId || !amount || !depositRef) return showToast('All fields are required.', 'error')
+  if (!walletId || !originalAmount || originalAmount <= 0 || !depositRef) return showToast('All fields are required.', 'error')
+  const rate = EXCHANGE_RATES[currency]
+  const usdAmount = Math.floor(originalAmount * rate)
+  if (usdAmount < 1) return showToast('Converted USD amount must be at least 1 token.', 'error')
   const btn = document.getElementById('btn-mint')
   btn.disabled = true; btn.textContent = 'Minting…'
   try {
-    const res = await apiFetch('POST', '/tokens/mint', 'Org1', { walletId, amount: String(amount), depositRef })
+    const payload = {
+      walletId,
+      amount: String(usdAmount),
+      depositRef,
+      originalCurrency: currency,
+      originalAmount: String(originalAmount),
+      exchangeRate: String(rate)
+    }
+    const res = await apiFetch('POST', '/tokens/mint', 'Org1', payload)
     showAdminResponse('res-mint', res.status, res.data)
-    if (res.ok) showToast(`Minted ${fmtAmount(amount)} DSP to "${walletId}".`, 'success')
+    if (res.ok) showToast(`Minted ${fmtAmount(usdAmount)} DSP to "${walletId}" (${originalAmount} ${currency} @ ${rate}).`, 'success')
     else showToast(friendlyError(res.data), 'error')
   } catch (err) { showToast(err.message, 'error') }
   finally { btn.disabled = false; btn.textContent = 'Mint Tokens (Org1)' }
