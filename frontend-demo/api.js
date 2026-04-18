@@ -248,11 +248,12 @@ function renderTxTable(container, records, myWalletId, showType = true) {
     const sign     = isOut ? '−' : '+'
     const typeCell = showType ? `<td>${txTypePill(tx.txType)}</td>` : ''
     const feeCell  = showType ? `<td>${tx.fee > 0 ? fmtAmount(tx.fee) + ' DSP' : '—'}</td>` : ''
+    const memoLine = tx.memo ? `<div style="font-size:.75rem;color:var(--neutral-500);font-style:italic;margin-top:2px">${escHtml(tx.memo)}</div>` : ''
     return `<tr>
       <td>${fmtDate(tx.timestamp)}</td>
       ${typeCell}
       <td class="tx-id" title="${escHtml(counterpart ?? '')}">${escHtml(truncId(counterpart, 18))}</td>
-      <td class="activity-amount ${dir}"><strong>${sign}${fmtAmount(tx.amount)}</strong></td>
+      <td class="activity-amount ${dir}"><strong>${sign}${fmtAmount(tx.amount)}</strong>${memoLine}</td>
       ${feeCell}
     </tr>`
   }).join('')
@@ -297,12 +298,14 @@ function renderActivityList(container, records, myWalletId) {
     const sign        = isOut ? '−' : '+'
     const icon        = isOut ? '↑' : '↓'
 
+    const memoLine = tx.memo ? `<div class="activity-memo">${escHtml(tx.memo)}</div>` : ''
     return `
       <div class="activity-item">
         <div class="activity-icon ${dir}">${icon}</div>
         <div class="activity-body">
           <div class="activity-title">${escHtml(truncId(counterpart, 20))}</div>
           <div class="activity-date">${fmtDate(tx.timestamp)} · <span class="pill pill-completed">Completed</span></div>
+          ${memoLine}
         </div>
         <div class="activity-right">
           <div class="activity-amount ${dir}">${sign}${fmtCurrency(tx.amount)}</div>

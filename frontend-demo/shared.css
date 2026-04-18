@@ -732,6 +732,7 @@ input::placeholder { color: var(--neutral-400); }
 .activity-body { flex: 1; min-width: 0; }
 .activity-title { font-size: .9rem; font-weight: 600; color: var(--neutral-900); }
 .activity-sub   { font-size: .8rem; color: var(--neutral-500); margin-top: 1px; }
+.activity-memo  { font-size: .78rem; color: var(--neutral-500); font-style: italic; margin-top: 2px; }
 
 .activity-right { text-align: right; flex-shrink: 0; }
 .activity-amount       { font-size: .95rem; font-weight: 700; color: var(--neutral-900); }

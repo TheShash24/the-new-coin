@@ -60,6 +60,7 @@ func (s *Server) handleTransfer(w http.ResponseWriter, r *http.Request) {
 		FromID string `json:"fromId"`
 		ToID   string `json:"toId"`
 		Amount string `json:"amount"`
+		Memo   string `json:"memo"`
 	}
 	if !decodeBody(w, r, &body) {
 		return
@@ -68,7 +69,13 @@ func (s *Server) handleTransfer(w http.ResponseWriter, r *http.Request) {
 		writeError(w, http.StatusBadRequest, "fromId, toId, and amount are required")
 		return
 	}
-	result, ok := submit(w, conn.Contract(), "Transfer", body.FromID, body.ToID, body.Amount)
+	var result []byte
+	var ok bool
+	if body.Memo != "" {
+		result, ok = submit(w, conn.Contract(), "Transfer", body.FromID, body.ToID, body.Amount, body.Memo)
+	} else {
+		result, ok = submit(w, conn.Contract(), "Transfer", body.FromID, body.ToID, body.Amount)
+	}
 	if !ok {
 		return
 	}
@@ -89,6 +96,7 @@ func (s *Server) handlePayVendor(w http.ResponseWriter, r *http.Request) {
 		FromID string `json:"fromId"`
 		ToID   string `json:"toId"`
 		Amount string `json:"amount"`
+		Memo   string `json:"memo"`
 	}
 	if !decodeBody(w, r, &body) {
 		return
@@ -97,7 +105,13 @@ func (s *Server) handlePayVendor(w http.ResponseWriter, r *http.Request) {
 		writeError(w, http.StatusBadRequest, "fromId, toId, and amount are required")
 		return
 	}
-	result, ok := submit(w, conn.Contract(), "PayVendor", body.FromID, body.ToID, body.Amount)
+	var result []byte
+	var ok bool
+	if body.Memo != "" {
+		result, ok = submit(w, conn.Contract(), "PayVendor", body.FromID, body.ToID, body.Amount, body.Memo)
+	} else {
+		result, ok = submit(w, conn.Contract(), "PayVendor", body.FromID, body.ToID, body.Amount)
+	}
 	if !ok {
 		return
 	}

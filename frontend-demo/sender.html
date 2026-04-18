@@ -132,6 +132,10 @@
         <input type="text" id="send-to" placeholder="e.g. relative-001">
         <p class="hint">Your recipient's Hawal Digital account number in Sudan</p>
       </div>
+      <div class="form-group">
+        <label>What's this for? <span style="color:var(--neutral-500);font-weight:400">(optional)</span></label>
+        <input type="text" id="send-memo" placeholder="e.g. School fees, Rent for April, Emergency" maxlength="140">
+      </div>
       <div id="send-step2-alert"></div>
       <div class="modal-footer">
         <button class="btn btn-neutral" id="btn-send-back2">← Back</button>
@@ -148,6 +152,9 @@
         <div class="fee-breakdown-row highlight"><span>They receive</span><span id="confirm-recv">—</span></div>
         <div class="fee-breakdown-row" style="margin-top:8px;padding-top:8px;border-top:1px solid var(--border)">
           <span>To account</span><span id="confirm-to" class="account-chip">—</span>
+        </div>
+        <div class="fee-breakdown-row" id="confirm-memo-row" style="display:none">
+          <span>Note</span><span id="confirm-memo" style="font-style:italic;color:var(--neutral-600)">—</span>
         </div>
       </div>
       <div class="alert info" style="font-size:.875rem;margin-top:16px">
@@ -316,27 +323,37 @@ function goToStep3() {
   if (!toId) return setAlert('send-step2-alert', 'Please enter the recipient account number.', 'error')
   const amount = Number(document.getElementById('send-amount').value)
   const fee = calcFee(amount)
+  const memo = document.getElementById('send-memo').value.trim()
   document.getElementById('confirm-send').textContent = fmtCurrency(amount)
   document.getElementById('confirm-fee').textContent = fmtCurrency(fee)
   document.getElementById('confirm-recv').textContent = fmtCurrency(amount - fee)
   document.getElementById('confirm-to').textContent = toId
+  const memoRow = document.getElementById('confirm-memo-row')
+  if (memo) {
+    document.getElementById('confirm-memo').textContent = memo
+    memoRow.style.display = ''
+  } else {
+    memoRow.style.display = 'none'
+  }
   showSendStep(3)
 }
 
 async function confirmSend() {
   const toId = document.getElementById('send-to').value.trim()
   const amount = document.getElementById('send-amount').value.trim()
+  const memo = document.getElementById('send-memo').value.trim()
   const btn = document.getElementById('btn-send-confirm')
   btn.disabled = true
   btn.innerHTML = '<span class="spinner"></span> Sending…'
   try {
-    const res = await apiFetch('POST', '/tokens/transfer', ORG, {
-      fromId: walletId, toId, amount: String(amount)
-    })
+    const payload = { fromId: walletId, toId, amount: String(amount) }
+    if (memo) payload.memo = memo
+    const res = await apiFetch('POST', '/tokens/transfer', ORG, payload)
     if (res.ok) {
       closeModal('modal-send')
       showToast(`Transfer of ${fmtCurrency(amount)} to ${toId} confirmed.`, 'success')
       document.getElementById('send-to').value = ''
+      document.getElementById('send-memo').value = ''
       document.getElementById('send-amount').value = ''
       document.getElementById('calc-amount').value = ''
       updateCalc()

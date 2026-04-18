@@ -96,6 +96,10 @@
           <span class="input-suffix-label">GBP</span>
         </div>
       </div>
+      <div class="form-group">
+        <label>Payment note <span style="color:var(--neutral-500);font-weight:400">(optional)</span></label>
+        <input type="text" id="pay-memo" placeholder="e.g. Groceries, Medical, Household supplies" maxlength="140">
+      </div>
       <div id="pay-step1-alert"></div>
       <div class="modal-footer">
         <button class="btn btn-neutral" onclick="closeModal('modal-pay')">Cancel</button>
@@ -111,6 +115,9 @@
         <div class="fee-breakdown-row"><span>To merchant</span><span id="pay-confirm-to" class="account-chip">—</span></div>
         <div class="fee-breakdown-row highlight"><span>Amount</span><span id="pay-confirm-amount">—</span></div>
         <div class="fee-breakdown-row"><span>Fee</span><span id="pay-confirm-fee">—</span></div>
+        <div class="fee-breakdown-row" id="pay-confirm-memo-row" style="display:none">
+          <span>Note</span><span id="pay-confirm-memo" style="font-style:italic;color:var(--neutral-600)">—</span>
+        </div>
       </div>
       <div class="alert info" style="font-size:.875rem;margin-top:16px">
         This payment will be recorded and cannot be reversed.
@@ -239,25 +246,37 @@ function reviewPay() {
   if (!toId) return setAlert('pay-step1-alert', 'Please enter a merchant account number.', 'error')
   if (!amount || Number(amount) <= 0) return setAlert('pay-step1-alert', 'Please enter a valid amount.', 'error')
   const fee = calcFee(Number(amount))
+  const memo = document.getElementById('pay-memo').value.trim()
   document.getElementById('pay-confirm-from').textContent = walletId
   document.getElementById('pay-confirm-to').textContent = toId
   document.getElementById('pay-confirm-amount').textContent = fmtCurrency(amount)
   document.getElementById('pay-confirm-fee').textContent = fmtCurrency(fee)
+  const memoRow = document.getElementById('pay-confirm-memo-row')
+  if (memo) {
+    document.getElementById('pay-confirm-memo').textContent = memo
+    memoRow.style.display = ''
+  } else {
+    memoRow.style.display = 'none'
+  }
   showPayStep(2)
 }
 
 async function confirmPay() {
   const toId = document.getElementById('pay-to').value.trim()
   const amount = document.getElementById('pay-amount').value.trim()
+  const memo = document.getElementById('pay-memo').value.trim()
   const btn = document.getElementById('btn-pay-confirm')
   btn.disabled = true; btn.innerHTML = '<span class="spinner"></span> Processing…'
   try {
-    const res = await apiFetch('POST', '/tokens/pay', ORG, { fromId: walletId, toId, amount: String(amount) })
+    const payload = { fromId: walletId, toId, amount: String(amount) }
+    if (memo) payload.memo = memo
+    const res = await apiFetch('POST', '/tokens/pay', ORG, payload)
     if (res.ok) {
       closeModal('modal-pay')
       showToast(`Payment of ${fmtCurrency(amount)} to ${toId} confirmed.`, 'success')
       document.getElementById('pay-to').value = ''
       document.getElementById('pay-amount').value = ''
+      document.getElementById('pay-memo').value = ''
       await loadBalance()
       txRecords = []; txBookmark = ''; await loadRecentTx()
     } else setAlert('pay-step2-alert', friendlyError(res.data), 'error')
