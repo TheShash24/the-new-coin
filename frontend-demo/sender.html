@@ -7,6 +7,73 @@
   <link rel="stylesheet" href="shared.css">
   <style>
     :root { --page-primary: var(--green); --page-dark: var(--green-dark); --page-light: var(--green-light); }
+
+    /* ── Cost comparison table ──────────────────────────── */
+    .cost-compare {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+      margin-top: 16px;
+    }
+    .cost-compare-title {
+      font-size: .8125rem;
+      font-weight: 600;
+      color: var(--neutral-500);
+      text-transform: uppercase;
+      letter-spacing: .04em;
+      padding: 12px 16px 8px;
+    }
+    .cost-compare table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: .875rem;
+    }
+    .cost-compare thead th {
+      padding: 6px 14px;
+      text-align: left;
+      font-size: .75rem;
+      font-weight: 600;
+      color: var(--neutral-500);
+      background: var(--neutral-50, #f9fafb);
+      border-bottom: 1px solid var(--border);
+    }
+    .cost-compare thead th:not(:first-child) { text-align: right; }
+    .cost-compare tbody td {
+      padding: 10px 14px;
+      border-bottom: 1px solid var(--border);
+      vertical-align: middle;
+    }
+    .cost-compare tbody tr:last-child td { border-bottom: none; }
+    .cost-compare tbody td:not(:first-child) { text-align: right; }
+    .cost-compare tbody tr.row-hawal {
+      background: #f0fdf4;
+    }
+    .cost-compare tbody tr.row-hawal td { color: #15803d; font-weight: 600; }
+    .cost-compare .method-cell { display: flex; align-items: center; gap: 8px; }
+    .cost-compare .method-name { font-weight: 600; color: var(--neutral-800); }
+    .row-hawal .method-name { color: #15803d; }
+    .cost-compare .method-note { font-size: .7rem; color: var(--neutral-500); margin-top: 1px; }
+    .row-hawal .method-note { color: #16a34a; }
+    .badge-best {
+      display: inline-block;
+      background: #16a34a;
+      color: #fff;
+      font-size: .65rem;
+      font-weight: 700;
+      padding: 1px 6px;
+      border-radius: 999px;
+      text-transform: uppercase;
+      letter-spacing: .03em;
+      flex-shrink: 0;
+    }
+    .cost-compare .disclaimer {
+      font-size: .7rem;
+      color: var(--neutral-400);
+      padding: 8px 14px 10px;
+      line-height: 1.5;
+      border-top: 1px solid var(--border);
+    }
   </style>
 </head>
 <body>
@@ -66,6 +133,25 @@
       <button class="btn btn-primary" id="btn-send-money" style="width:100%;margin-top:16px;padding:14px">
         Send Now →
       </button>
+    </div>
+
+    <!-- Cost Comparison -->
+    <div class="cost-compare" id="cost-compare" style="display:none">
+      <div class="cost-compare-title">How we compare</div>
+      <table>
+        <thead>
+          <tr>
+            <th>Method</th>
+            <th>Recipient gets</th>
+            <th>Fee</th>
+            <th>Arrives</th>
+          </tr>
+        </thead>
+        <tbody id="compare-tbody"></tbody>
+      </table>
+      <div class="disclaimer">
+        Competitor fees are estimates based on World Bank Remittance Prices Worldwide (2024) for the UK–Sudan corridor. Actual fees may vary.
+      </div>
     </div>
 
     <!-- Recent Activity -->
@@ -234,16 +320,60 @@ document.addEventListener('DOMContentLoaded', () => {
   })
 })
 
+// ── Cost Comparison ───────────────────────────────────────
+
+const COMPARE_METHODS = [
+  { key: 'hawal',  name: 'Hawal Digital', feeType: 'pct',  feePct: 0.001,  feeFlat: 1, minFee: 1, arrival: 'Instant',          note: null,                           hawal: true },
+  { key: 'wu',     name: 'Western Union', feeType: 'pct',  feePct: 0.08,   feeFlat: 0, minFee: 0, arrival: '1–3 business days', note: null,                           hawal: false },
+  { key: 'mg',     name: 'MoneyGram',     feeType: 'pct',  feePct: 0.065,  feeFlat: 0, minFee: 0, arrival: '1–2 business days', note: null,                           hawal: false },
+  { key: 'swift',  name: 'Bank wire (SWIFT)', feeType: 'flat', feePct: 0,  feeFlat: 35, minFee: 0, arrival: '3–5 business days', note: null,                          hawal: false },
+  { key: 'hawala', name: 'Hawala (informal)', feeType: 'pct', feePct: 0.05, feeFlat: 0, minFee: 0, arrival: 'Same day',          note: 'No receipt, no traceability', hawal: false },
+]
+
+function calcMethodFee(method, amount) {
+  if (method.feeType === 'flat') return method.feeFlat
+  return Math.max(method.minFee, Math.ceil(amount * method.feePct))
+}
+
+function updateCompare(amount) {
+  const widget = document.getElementById('cost-compare')
+  const tbody  = document.getElementById('compare-tbody')
+  if (!amount || amount <= 0) { widget.style.display = 'none'; return }
+  widget.style.display = 'block'
+  tbody.innerHTML = COMPARE_METHODS.map(m => {
+    const fee       = calcMethodFee(m, amount)
+    const receives  = Math.max(0, amount - fee)
+    const rowCls    = m.hawal ? 'row-hawal' : ''
+    const badge     = m.hawal ? ' <span class="badge-best">Best value</span>' : ''
+    const noteHtml  = m.note  ? `<div class="method-note">${escHtml(m.note)}</div>` : ''
+    return `<tr class="${rowCls}">
+      <td>
+        <div class="method-cell">
+          <div>
+            <div class="method-name">${escHtml(m.name)}${badge}</div>
+            ${noteHtml}
+          </div>
+        </div>
+      </td>
+      <td>${fmtCurrency(receives)}</td>
+      <td>${fmtCurrency(fee)}</td>
+      <td style="white-space:nowrap">${escHtml(m.arrival)}</td>
+    </tr>`
+  }).join('')
+}
+
 function updateCalc() {
   const amount = Number(document.getElementById('calc-amount').value)
   if (!amount || amount <= 0) {
     document.getElementById('calc-fee').textContent = '—'
     document.getElementById('calc-receive').textContent = '—'
+    updateCompare(0)
     return
   }
   const fee = calcFee(amount)
   document.getElementById('calc-fee').textContent = fmtCurrency(fee)
   document.getElementById('calc-receive').textContent = fmtCurrency(amount - fee)
+  updateCompare(amount)
 }
 
 function updateFeePreview() {
