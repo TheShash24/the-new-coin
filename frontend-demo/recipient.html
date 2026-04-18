@@ -7,6 +7,37 @@
   <link rel="stylesheet" href="shared.css">
   <style>
     :root { --page-primary: var(--green); --page-dark: var(--green-dark); --page-light: var(--green-light); }
+
+    /* ── Marketplace product cards ──────────────────────── */
+    .products-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+      gap: 16px;
+      margin-top: 4px;
+    }
+    .product-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 18px 16px 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .product-name   { font-size: .9375rem; font-weight: 700; color: var(--neutral-900); line-height: 1.3; }
+    .product-vendor { font-size: .75rem; color: var(--neutral-500); }
+    .product-price  { font-size: 1.125rem; font-weight: 700; color: var(--neutral-900); margin-top: 4px; }
+    .product-save   { font-size: .78rem; color: var(--green, #16a34a); margin-top: 1px; }
+    .product-market { font-size: .78rem; color: var(--neutral-500); }
+    .product-actions { display: flex; gap: 8px; margin-top: 10px; }
+    .product-actions .btn { flex: 1; font-size: .78rem; padding: 5px 0; }
+
+    .pill-electronics { background: #dbeafe; color: #1d4ed8; }
+    .pill-groceries   { background: #dcfce7; color: #15803d; }
+    .pill-services    { background: #ede9fe; color: #6d28d9; }
+    .pill-topup       { background: #fef3c7; color: #92400e; }
+    .pill-clothing    { background: #fce7f3; color: #9d174d; }
+    .pill-other       { background: var(--neutral-100); color: var(--neutral-600); }
   </style>
 </head>
 <body>
@@ -19,6 +50,7 @@
 
 <nav class="nav-tabs">
   <button class="nav-tab active" data-tab="home">Home</button>
+  <button class="nav-tab" data-tab="marketplace">Marketplace</button>
   <button class="nav-tab" data-tab="history">Transaction History</button>
 </nav>
 
@@ -60,6 +92,14 @@
       </div>
     </div>
 
+  </div>
+
+  <!-- Marketplace Panel -->
+  <div class="tab-panel" id="panel-marketplace">
+    <div class="section-header">
+      <h2>Marketplace</h2>
+    </div>
+    <div class="products-grid" id="marketplace-grid"></div>
   </div>
 
   <!-- History Panel -->
@@ -289,6 +329,88 @@ function setAlert(id, msg, type) {
   if (el) el.innerHTML = `<div class="alert ${type}" style="margin-top:12px">${escHtml(msg)}</div>`
 }
 function clearAlert(id) { const el = document.getElementById(id); if (el) el.innerHTML = '' }
+
+// ── Marketplace ───────────────────────────────────────────
+
+const MARKETPLACE_DEMOS = [
+  { id: 'demo-1', name: 'Samsung Galaxy A15',     category: 'Electronics',  price: 180, marketPrice: 220, vendorId: 'vendor-001' },
+  { id: 'demo-2', name: 'Monthly Grocery Bundle', category: 'Groceries',    price: 45,  marketPrice: 55,  vendorId: 'vendor-001' },
+  { id: 'demo-3', name: 'MTN Mobile Top-up 10GB', category: 'Mobile Top-up',price: 12,  marketPrice: 15,  vendorId: 'vendor-001' },
+]
+
+const MKT_CATEGORY_PILL = {
+  'Electronics':  'electronics',
+  'Groceries':    'groceries',
+  'Services':     'services',
+  'Mobile Top-up':'topup',
+  'Clothing':     'clothing',
+  'Other':        'other',
+}
+
+function loadMarketplace() {
+  const grid = document.getElementById('marketplace-grid')
+  let products = []
+
+  // Scan all localStorage keys matching vendor_products_*
+  for (let i = 0; i < localStorage.length; i++) {
+    const key = localStorage.key(i)
+    if (!key || !key.startsWith('vendor_products_')) continue
+    const vendorId = key.slice('vendor_products_'.length)
+    try {
+      const items = JSON.parse(localStorage.getItem(key))
+      if (Array.isArray(items)) {
+        items.forEach(p => products.push({ ...p, vendorId }))
+      }
+    } catch { /* skip malformed entries */ }
+  }
+
+  if (!products.length) products = MARKETPLACE_DEMOS
+
+  grid.innerHTML = products.map(p => {
+    const pillClass = MKT_CATEGORY_PILL[p.category] ?? 'other'
+    let savingsHtml = ''
+    if (p.marketPrice && Number(p.marketPrice) > Number(p.price)) {
+      const saved = Number(p.marketPrice) - Number(p.price)
+      savingsHtml = `
+        <div class="product-market">Market price: $${Number(p.marketPrice).toLocaleString()}</div>
+        <div class="product-save">You save $${saved.toLocaleString()} compared to market price</div>`
+    }
+    // Escape id/vendorId/name for inline onclick — store in data attributes instead
+    return `
+      <div class="product-card"
+           data-vendor="${escHtml(p.vendorId)}"
+           data-price="${Number(p.price)}"
+           data-name="${escHtml(p.name)}">
+        <span class="pill pill-${pillClass}" style="align-self:flex-start">${escHtml(p.category)}</span>
+        <div class="product-name">${escHtml(p.name)}</div>
+        <div class="product-vendor">Sold by: ${escHtml(truncId(p.vendorId, 20))}</div>
+        <div class="product-price">$${Number(p.price).toLocaleString()} <span style="font-size:.8rem;font-weight:400;color:var(--neutral-500)">tokens</span></div>
+        ${savingsHtml}
+        <div class="product-actions">
+          <button class="btn btn-primary btn-buy">Buy</button>
+        </div>
+      </div>`
+  }).join('')
+
+  // Wire Buy buttons via delegation
+  grid.querySelectorAll('.btn-buy').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const card = btn.closest('.product-card')
+      const vendorId = card.dataset.vendor
+      const price    = card.dataset.price
+      const name     = card.dataset.name
+      if (!walletId) return showToast('Please set your account number first.', 'error')
+      // Pre-fill the Pay Merchant modal
+      document.getElementById('pay-to').value     = vendorId
+      document.getElementById('pay-amount').value = price
+      document.getElementById('pay-memo').value   = name
+      showPayStep(1)
+      openModal('modal-pay')
+    })
+  })
+}
+
+document.querySelector('.nav-tab[data-tab="marketplace"]')?.addEventListener('click', loadMarketplace)
 </script>
 </body>
 </html>
