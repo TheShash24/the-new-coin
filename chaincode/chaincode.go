@@ -385,6 +385,16 @@ func (s *SmartContract) RegisterWallet(ctx contractapi.TransactionContextInterfa
 	if err := requireOrg1OrOrg2(ctx); err != nil {
 		return err
 	}
+	mspid, err := ctx.GetClientIdentity().GetMSPID()
+	if err != nil {
+		return fmt.Errorf("failed to get MSP ID: %w", err)
+	}
+	if mspid == MSPOrg1 && (role == RoleRelative || role == RoleVendor) {
+		return fmt.Errorf("Org1MSP can only register DIASPORA wallets")
+	}
+	if mspid == MSPOrg2 && role == RoleDiaspora {
+		return fmt.Errorf("Org2MSP can only register RELATIVE or VENDOR wallets")
+	}
 	if role != RoleDiaspora && role != RoleRelative && role != RoleVendor {
 		return fmt.Errorf("invalid role %q: must be DIASPORA, RELATIVE, or VENDOR", role)
 	}

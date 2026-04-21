@@ -108,7 +108,7 @@
     <div class="balance-card" id="balance-card">
       <div class="balance-label">Your balance</div>
       <div class="balance-amount" id="balance-amount">—</div>
-      <div class="balance-currency">GBP</div>
+      <div class="balance-currency">HMZ</div>
       <div class="balance-footer">
         <span class="balance-meta" id="balance-wallet-id"></span>
       </div>
@@ -346,6 +346,7 @@ function updateCompare(amount) {
     const rowCls    = m.hawal ? 'row-hawal' : ''
     const badge     = m.hawal ? ' <span class="badge-best">Best value</span>' : ''
     const noteHtml  = m.note  ? `<div class="method-note">${escHtml(m.note)}</div>` : ''
+    const fmtAmt    = m.hawal ? fmtHMZ : fmtCurrency
     return `<tr class="${rowCls}">
       <td>
         <div class="method-cell">
@@ -355,8 +356,8 @@ function updateCompare(amount) {
           </div>
         </div>
       </td>
-      <td>${fmtCurrency(receives)}</td>
-      <td>${fmtCurrency(fee)}</td>
+      <td>${fmtAmt(receives)}</td>
+      <td>${fmtAmt(fee)}</td>
       <td style="white-space:nowrap">${escHtml(m.arrival)}</td>
     </tr>`
   }).join('')
@@ -371,8 +372,8 @@ function updateCalc() {
     return
   }
   const fee = calcFee(amount)
-  document.getElementById('calc-fee').textContent = fmtCurrency(fee)
-  document.getElementById('calc-receive').textContent = fmtCurrency(amount - fee)
+  document.getElementById('calc-fee').textContent = fmtHMZ(fee)
+  document.getElementById('calc-receive').textContent = fmtHMZ(amount - fee)
   updateCompare(amount)
 }
 
@@ -382,9 +383,9 @@ function updateFeePreview() {
   if (!amount || amount <= 0) { preview.style.display = 'none'; return }
   const fee = calcFee(amount)
   preview.style.display = 'block'
-  document.getElementById('prev-send').textContent = fmtCurrency(amount)
-  document.getElementById('prev-fee').textContent = fmtCurrency(fee)
-  document.getElementById('prev-recv').textContent = fmtCurrency(amount - fee)
+  document.getElementById('prev-send').textContent = fmtHMZ(amount)
+  document.getElementById('prev-fee').textContent = fmtHMZ(fee)
+  document.getElementById('prev-recv').textContent = fmtHMZ(amount - fee)
 }
 
 async function loadDashboard() {
@@ -400,7 +401,7 @@ async function loadBalance() {
     const res = await apiFetch('GET', `/wallets/${encodeURIComponent(walletId)}/balance`, ORG)
     if (res.ok) {
       const bal = typeof res.data === 'object' ? (res.data.result ?? res.data) : res.data
-      el.textContent = fmtCurrency(bal)
+      el.textContent = fmtHMZ(bal)
     } else { el.textContent = '—'; showToast(friendlyError(res.data), 'error') }
   } catch (err) { el.textContent = '—'; showToast(err.message, 'error') }
 }
@@ -454,9 +455,9 @@ function goToStep3() {
   const amount = Number(document.getElementById('send-amount').value)
   const fee = calcFee(amount)
   const memo = document.getElementById('send-memo').value.trim()
-  document.getElementById('confirm-send').textContent = fmtCurrency(amount)
-  document.getElementById('confirm-fee').textContent = fmtCurrency(fee)
-  document.getElementById('confirm-recv').textContent = fmtCurrency(amount - fee)
+  document.getElementById('confirm-send').textContent = fmtHMZ(amount)
+  document.getElementById('confirm-fee').textContent = fmtHMZ(fee)
+  document.getElementById('confirm-recv').textContent = fmtHMZ(amount - fee)
   document.getElementById('confirm-to').textContent = toId
   const memoRow = document.getElementById('confirm-memo-row')
   if (memo) {
@@ -481,7 +482,7 @@ async function confirmSend() {
     const res = await apiFetch('POST', '/tokens/transfer', ORG, payload)
     if (res.ok) {
       closeModal('modal-send')
-      showToast(`Transfer of ${fmtCurrency(amount)} to ${toId} confirmed.`, 'success')
+      showToast(`Transfer of ${fmtHMZ(amount)} to ${toId} confirmed.`, 'success')
       document.getElementById('send-to').value = ''
       document.getElementById('send-memo').value = ''
       document.getElementById('send-amount').value = ''

@@ -171,6 +171,10 @@ function fmtAmount(n) {
   return Number(n).toLocaleString()
 }
 
+function fmtHMZ(n) {
+  return Number(n).toLocaleString() + ' HMZ'
+}
+
 function truncId(id, len = 16) {
   if (!id) return '—'
   return id.length > len ? id.slice(0, len) + '…' : id
@@ -247,7 +251,7 @@ function renderTxTable(container, records, myWalletId, showType = true) {
     const dir      = isOut ? 'out' : 'in'
     const sign     = isOut ? '−' : '+'
     const typeCell = showType ? `<td>${txTypePill(tx.txType)}</td>` : ''
-    const feeCell  = showType ? `<td>${tx.fee > 0 ? fmtAmount(tx.fee) + ' DSP' : '—'}</td>` : ''
+    const feeCell  = showType ? `<td>${tx.fee > 0 ? fmtAmount(tx.fee) + ' HMZ' : '—'}</td>` : ''
     const memoLine = tx.memo ? `<div style="font-size:.75rem;color:var(--neutral-500);font-style:italic;margin-top:2px">${escHtml(tx.memo)}</div>` : ''
     return `<tr>
       <td>${fmtDate(tx.timestamp)}</td>

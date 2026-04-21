@@ -72,7 +72,7 @@
     <div class="balance-card" id="balance-card">
       <div class="balance-label">Your balance</div>
       <div class="balance-amount" id="balance-amount">—</div>
-      <div class="balance-currency">GBP</div>
+      <div class="balance-currency">HMZ</div>
       <div class="balance-footer">
         <span class="balance-meta" id="balance-wallet-id"></span>
         <button class="btn btn-lg" id="btn-pay-vendor"
@@ -238,7 +238,7 @@ async function loadBalance() {
     const res = await apiFetch('GET', `/wallets/${encodeURIComponent(walletId)}/balance`, ORG)
     if (res.ok) {
       const bal = typeof res.data === 'object' ? (res.data.result ?? res.data) : res.data
-      el.textContent = fmtCurrency(bal)
+      el.textContent = fmtHMZ(bal)
     } else { el.textContent = '—'; showToast(friendlyError(res.data), 'error') }
   } catch (err) { el.textContent = '—'; showToast(err.message, 'error') }
 }
@@ -289,8 +289,8 @@ function reviewPay() {
   const memo = document.getElementById('pay-memo').value.trim()
   document.getElementById('pay-confirm-from').textContent = walletId
   document.getElementById('pay-confirm-to').textContent = toId
-  document.getElementById('pay-confirm-amount').textContent = fmtCurrency(amount)
-  document.getElementById('pay-confirm-fee').textContent = fmtCurrency(fee)
+  document.getElementById('pay-confirm-amount').textContent = fmtHMZ(amount)
+  document.getElementById('pay-confirm-fee').textContent = fmtHMZ(fee)
   const memoRow = document.getElementById('pay-confirm-memo-row')
   if (memo) {
     document.getElementById('pay-confirm-memo').textContent = memo
@@ -313,7 +313,7 @@ async function confirmPay() {
     const res = await apiFetch('POST', '/tokens/pay', ORG, payload)
     if (res.ok) {
       closeModal('modal-pay')
-      showToast(`Payment of ${fmtCurrency(amount)} to ${toId} confirmed.`, 'success')
+      showToast(`Payment of ${fmtHMZ(amount)} to ${toId} confirmed.`, 'success')
       document.getElementById('pay-to').value = ''
       document.getElementById('pay-amount').value = ''
       document.getElementById('pay-memo').value = ''
@@ -384,7 +384,7 @@ function loadMarketplace() {
         <span class="pill pill-${pillClass}" style="align-self:flex-start">${escHtml(p.category)}</span>
         <div class="product-name">${escHtml(p.name)}</div>
         <div class="product-vendor">Sold by: ${escHtml(truncId(p.vendorId, 20))}</div>
-        <div class="product-price">$${Number(p.price).toLocaleString()} <span style="font-size:.8rem;font-weight:400;color:var(--neutral-500)">tokens</span></div>
+        <div class="product-price">${Number(p.price).toLocaleString()} <span style="font-size:.8rem;font-weight:400;color:var(--neutral-500)">HMZ</span></div>
         ${savingsHtml}
         <div class="product-actions">
           <button class="btn btn-primary btn-buy">Buy</button>

@@ -266,8 +266,8 @@
         <div class="form-group" style="max-width:140px">
           <label>New KYC Tier</label>
           <select id="kyc-tier">
-            <option value="1">1 — up to 1,000 DSP</option>
-            <option value="2" selected>2 — up to 10,000 DSP</option>
+            <option value="1">1 — up to 1,000 HMZ</option>
+            <option value="2" selected>2 — up to 10,000 HMZ</option>
             <option value="3">3 — unlimited</option>
           </select>
         </div>
@@ -343,7 +343,7 @@ function updateMintPreview() {
   const rate = EXCHANGE_RATES[currency]
   const usdAmount = Math.floor(originalAmount * rate)
   preview.style.display = 'block'
-  preview.innerHTML = `<strong>${originalAmount} ${currency}</strong> × ${rate} (${currency}/USD) = <strong>${usdAmount} USD = ${usdAmount} tokens</strong>`
+  preview.innerHTML = `<strong>${originalAmount} ${currency}</strong> × ${rate} (${currency}/USD) = <strong>${usdAmount} USD = ${usdAmount} HMZ</strong>`
 }
 
 document.getElementById('mint-currency').addEventListener('change', updateMintPreview)
@@ -371,7 +371,7 @@ document.getElementById('btn-mint').addEventListener('click', async () => {
     }
     const res = await apiFetch('POST', '/tokens/mint', 'Org1', payload)
     showAdminResponse('res-mint', res.status, res.data)
-    if (res.ok) showToast(`Minted ${fmtAmount(usdAmount)} DSP to "${walletId}" (${originalAmount} ${currency} @ ${rate}).`, 'success')
+    if (res.ok) showToast(`Minted ${fmtAmount(usdAmount)} HMZ to "${walletId}" (${originalAmount} ${currency} @ ${rate}).`, 'success')
     else showToast(friendlyError(res.data), 'error')
   } catch (err) { showToast(err.message, 'error') }
   finally { btn.disabled = false; btn.textContent = 'Mint Tokens (Org1)' }

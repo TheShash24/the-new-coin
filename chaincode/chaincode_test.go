@@ -276,6 +276,51 @@ func TestRegisterWallet_Duplicate(t *testing.T) {
 	}
 }
 
+func TestRegisterWallet_Org1RegistersRelative(t *testing.T) {
+	ctx := newCtx(MSPOrg1, "user1", "tx1")
+	sc := new(SmartContract)
+	err := sc.RegisterWallet(ctx, "w1", RoleRelative, 2)
+	if err == nil {
+		t.Fatal("expected error: Org1MSP cannot register RELATIVE wallets")
+	}
+}
+
+func TestRegisterWallet_Org1RegistersVendor(t *testing.T) {
+	ctx := newCtx(MSPOrg1, "user1", "tx1")
+	sc := new(SmartContract)
+	err := sc.RegisterWallet(ctx, "w1", RoleVendor, 2)
+	if err == nil {
+		t.Fatal("expected error: Org1MSP cannot register VENDOR wallets")
+	}
+}
+
+func TestRegisterWallet_Org2RegistersRelative(t *testing.T) {
+	ctx := newCtx(MSPOrg2, "user2", "tx1")
+	sc := new(SmartContract)
+	err := sc.RegisterWallet(ctx, "w1", RoleRelative, 2)
+	if err != nil {
+		t.Fatalf("expected no error for Org2MSP registering RELATIVE, got: %v", err)
+	}
+}
+
+func TestRegisterWallet_Org2RegistersVendor(t *testing.T) {
+	ctx := newCtx(MSPOrg2, "user2", "tx1")
+	sc := new(SmartContract)
+	err := sc.RegisterWallet(ctx, "w1", RoleVendor, 2)
+	if err != nil {
+		t.Fatalf("expected no error for Org2MSP registering VENDOR, got: %v", err)
+	}
+}
+
+func TestRegisterWallet_Org2RegistersDiaspora(t *testing.T) {
+	ctx := newCtx(MSPOrg2, "user2", "tx1")
+	sc := new(SmartContract)
+	err := sc.RegisterWallet(ctx, "w1", RoleDiaspora, 2)
+	if err == nil {
+		t.Fatal("expected error: Org2MSP cannot register DIASPORA wallets")
+	}
+}
+
 // ============================================================
 // MintTokens tests
 // ============================================================
