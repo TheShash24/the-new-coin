@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Bank B Admin — Hawal Digital Sudan</title>
+  <link rel="stylesheet" href="shared.css">
+  <style>
+    :root { --page-primary: #5f6368; --page-dark: #3c4043; --page-light: #f1f3f4; }
+
+    .admin-topbar {
+      background: var(--neutral-900);
+      color: #fff;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 0 24px;
+      height: 56px;
+    }
+    .admin-topbar h1 { font-size: 1rem; font-weight: 600; flex: 1; }
+    .admin-badge {
+      background: #e53935;
+      border-radius: 4px;
+      font-size: .7rem;
+      font-weight: 700;
+      letter-spacing: .5px;
+      padding: 2px 8px;
+      text-transform: uppercase;
+    }
+    .org-badge-fixed {
+      background: #1a3a1a;
+      border-radius: 4px;
+      color: #4ec94e;
+      font-size: .7rem;
+      font-weight: 700;
+      letter-spacing: .5px;
+      padding: 2px 8px;
+    }
+
+    .admin-content {
+      max-width: 700px;
+      margin: 0 auto;
+      padding: 28px 24px;
+    }
+
+    .admin-section {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      margin-bottom: 20px;
+      overflow: hidden;
+    }
+
+    .admin-section-header {
+      background: var(--neutral-50);
+      border-bottom: 1px solid var(--border);
+      padding: 14px 20px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .admin-section-header h3 { font-size: .9375rem; margin: 0; }
+    .admin-section-header .method {
+      background: #e8f0fe;
+      color: #1a73e8;
+      border-radius: 4px;
+      font-size: .7rem;
+      font-weight: 700;
+      padding: 2px 7px;
+    }
+    .admin-section-header .endpoint {
+      font-family: monospace;
+      font-size: .8125rem;
+      color: var(--neutral-600);
+    }
+
+    .admin-section-body { padding: 20px; }
+
+    .response-box {
+      background: #1e1e1e;
+      border-radius: var(--radius-sm);
+      color: #ce9178;
+      font-family: 'Courier New', monospace;
+      font-size: .8125rem;
+      margin-top: 14px;
+      max-height: 200px;
+      overflow-y: auto;
+      padding: 14px;
+      white-space: pre-wrap;
+      word-break: break-all;
+      display: none;
+    }
+    .response-box.visible { display: block; }
+
+    .response-status {
+      display: inline-block;
+      border-radius: 4px;
+      font-size: .75rem;
+      font-weight: 700;
+      margin-bottom: 8px;
+      padding: 2px 8px;
+    }
+    .response-status.ok  { background: #1a3a1a; color: #4ec94e; }
+    .response-status.err { background: #3a1a1a; color: #f47070; }
+
+    .disclaimer {
+      background: #fff8e1;
+      border: 1px solid #ffe082;
+      border-radius: var(--radius-sm);
+      color: #5d4037;
+      font-size: .8125rem;
+      margin-bottom: 24px;
+      padding: 12px 16px;
+    }
+
+    .lock-note {
+      background: var(--info-bg);
+      border: 1px solid var(--info-bdr);
+      border-radius: var(--radius-sm);
+      color: var(--info-text);
+      font-size: .8125rem;
+      padding: 8px 12px;
+      margin-bottom: 12px;
+    }
+  </style>
+</head>
+<body>
+
+<div class="admin-topbar">
+  <h1>⚙️ Bank B — Admin Portal</h1>
+  <span class="org-badge-fixed">Org2MSP</span>
+  <span class="admin-badge">Internal</span>
+  <a href="index.html" class="btn-logout" style="margin-left:8px">← Back</a>
+</div>
+
+<div class="admin-content">
+
+  <div class="disclaimer">
+    ⚠️ This page is for Bank B operators only. All actions are executed against the Hyperledger Fabric network and permanently recorded on the blockchain. Token minting and ledger initialisation are Bank A operations and are not available here.
+  </div>
+
+  <!-- ── Register Wallet ──────────────────────────────── -->
+  <div class="admin-section">
+    <div class="admin-section-header">
+      <span class="method">POST</span>
+      <h3>Register Wallet</h3>
+      <span class="endpoint">/wallets</span>
+    </div>
+    <div class="admin-section-body">
+      <div class="lock-note">ℹ️ Bank B registers Sudan-side accounts only. Role must be RELATIVE (recipient) or VENDOR (merchant).</div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Wallet ID</label>
+          <input type="text" id="reg-id" placeholder="e.g. relative-001 or vendor-001">
+        </div>
+        <div class="form-group" style="max-width:160px">
+          <label>Role</label>
+          <select id="reg-role">
+            <option value="RELATIVE">RELATIVE (recipient)</option>
+            <option value="VENDOR">VENDOR (merchant)</option>
+          </select>
+        </div>
+        <div class="form-group" style="max-width:110px">
+          <label>KYC Tier</label>
+          <select id="reg-kyc">
+            <option value="1">1</option>
+            <option value="2" selected>2</option>
+            <option value="3">3</option>
+          </select>
+        </div>
+      </div>
+      <button class="btn" style="background:var(--neutral-900);color:#fff" id="btn-register">Register Wallet</button>
+      <div class="response-box" id="res-register"></div>
+    </div>
+  </div>
+
+  <!-- ── Update KYC Tier ───────────────────────────────── -->
+  <div class="admin-section">
+    <div class="admin-section-header">
+      <span class="method">PUT</span>
+      <h3>Update KYC Tier</h3>
+      <span class="endpoint">/wallets/{id}/kyc</span>
+    </div>
+    <div class="admin-section-body">
+      <div class="lock-note">ℹ️ Updates KYC for Bank B (Org2) Sudan-side clients — recipients and merchants.</div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Wallet ID</label>
+          <input type="text" id="kyc-wallet" placeholder="e.g. relative-001 or vendor-001">
+        </div>
+        <div class="form-group" style="max-width:180px">
+          <label>New KYC Tier</label>
+          <select id="kyc-tier">
+            <option value="1">1 — up to 1,000 HMZ</option>
+            <option value="2" selected>2 — up to 10,000 HMZ</option>
+            <option value="3">3 — unlimited</option>
+          </select>
+        </div>
+      </div>
+      <button class="btn" style="background:var(--neutral-900);color:#fff" id="btn-kyc">Update KYC Tier</button>
+      <div class="response-box" id="res-kyc"></div>
+    </div>
+  </div>
+
+</div><!-- end .admin-content -->
+
+<script src="api.js"></script>
+<script>
+function showAdminResponse(boxId, status, data) {
+  const box = document.getElementById(boxId)
+  const ok = status >= 200 && status < 300
+  const statusEl = `<span class="response-status ${ok ? 'ok' : 'err'}">HTTP ${status}</span>\n`
+  box.className = 'response-box visible'
+  box.innerHTML = statusEl + escHtml(typeof data === 'string' ? data : JSON.stringify(data, null, 2))
+}
+
+// ── Register Wallet (RELATIVE or VENDOR) ──────────────────
+document.getElementById('btn-register').addEventListener('click', async () => {
+  const id = document.getElementById('reg-id').value.trim()
+  const role = document.getElementById('reg-role').value
+  const kycTier = document.getElementById('reg-kyc').value
+  if (!id) return showToast('Wallet ID is required.', 'error')
+  const btn = document.getElementById('btn-register')
+  btn.disabled = true; btn.textContent = 'Registering…'
+  try {
+    const res = await apiFetch('POST', '/wallets', { id, role, kycTier })
+    showAdminResponse('res-register', res.status, res.data)
+    if (res.ok) showToast(`Wallet "${id}" registered as ${role}.`, 'success')
+    else showToast(friendlyError(res.data), 'error')
+  } catch (err) { showToast(err.message, 'error') }
+  finally { btn.disabled = false; btn.textContent = 'Register Wallet' }
+})
+
+// ── Update KYC Tier ────────────────────────────────────────
+document.getElementById('btn-kyc').addEventListener('click', async () => {
+  const walletId = document.getElementById('kyc-wallet').value.trim()
+  const newTier = document.getElementById('kyc-tier').value
+  if (!walletId) return showToast('Wallet ID is required.', 'error')
+  const btn = document.getElementById('btn-kyc')
+  btn.disabled = true; btn.textContent = 'Updating…'
+  try {
+    const res = await apiFetch('PUT', `/wallets/${encodeURIComponent(walletId)}/kyc`, { newTier })
+    showAdminResponse('res-kyc', res.status, res.data)
+    if (res.ok) showToast(`KYC tier updated to ${newTier} for "${walletId}".`, 'success')
+    else showToast(friendlyError(res.data), 'error')
+  } catch (err) { showToast(err.message, 'error') }
+  finally { btn.disabled = false; btn.textContent = 'Update KYC Tier' }
+})
+</script>
+</body>
+</html>

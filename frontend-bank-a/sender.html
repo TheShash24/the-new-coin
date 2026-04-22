@@ -1,0 +1,498 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Hawal Digital UK — Send Money</title>
+  <link rel="stylesheet" href="shared.css">
+  <style>
+    :root { --page-primary: var(--green); --page-dark: var(--green-dark); --page-light: var(--green-light); }
+
+    /* ── Cost comparison table ──────────────────────────── */
+    .cost-compare {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+      margin-top: 16px;
+    }
+    .cost-compare-title {
+      font-size: .8125rem;
+      font-weight: 600;
+      color: var(--neutral-500);
+      text-transform: uppercase;
+      letter-spacing: .04em;
+      padding: 12px 16px 8px;
+    }
+    .cost-compare table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: .875rem;
+    }
+    .cost-compare thead th {
+      padding: 6px 14px;
+      text-align: left;
+      font-size: .75rem;
+      font-weight: 600;
+      color: var(--neutral-500);
+      background: var(--neutral-50, #f9fafb);
+      border-bottom: 1px solid var(--border);
+    }
+    .cost-compare thead th:not(:first-child) { text-align: right; }
+    .cost-compare tbody td {
+      padding: 10px 14px;
+      border-bottom: 1px solid var(--border);
+      vertical-align: middle;
+    }
+    .cost-compare tbody tr:last-child td { border-bottom: none; }
+    .cost-compare tbody td:not(:first-child) { text-align: right; }
+    .cost-compare tbody tr.row-hawal { background: #f0fdf4; }
+    .cost-compare tbody tr.row-hawal td { color: #15803d; font-weight: 600; }
+    .cost-compare .method-cell { display: flex; align-items: center; gap: 8px; }
+    .cost-compare .method-name { font-weight: 600; color: var(--neutral-800); }
+    .row-hawal .method-name { color: #15803d; }
+    .cost-compare .method-note { font-size: .7rem; color: var(--neutral-500); margin-top: 1px; }
+    .row-hawal .method-note { color: #16a34a; }
+    .badge-best {
+      display: inline-block;
+      background: #16a34a;
+      color: #fff;
+      font-size: .65rem;
+      font-weight: 700;
+      padding: 1px 6px;
+      border-radius: 999px;
+      text-transform: uppercase;
+      letter-spacing: .03em;
+      flex-shrink: 0;
+    }
+    .cost-compare .disclaimer {
+      font-size: .7rem;
+      color: var(--neutral-400);
+      padding: 8px 14px 10px;
+      line-height: 1.5;
+      border-top: 1px solid var(--border);
+    }
+  </style>
+</head>
+<body>
+
+<header class="topbar">
+  <div class="topbar-logo">Hawal <span style="color:var(--green)">Digital</span> <span class="logo-sub">UK</span></div>
+  <span class="role-badge">✈️ Sender</span>
+  <a class="btn-logout" href="index.html">← Back</a>
+</header>
+
+<nav class="nav-tabs">
+  <button class="nav-tab active" data-tab="home">Home</button>
+  <button class="nav-tab" data-tab="history">Transfer History</button>
+</nav>
+
+<div class="page-content" style="max-width:760px">
+
+  <!-- Account Setup Prompt -->
+  <div id="setup-prompt" class="setup-prompt" style="display:none">
+    <h3>Welcome to Hawal Digital.</h3>
+    <p>Enter your account number to get started — it will be saved on this device.</p>
+    <div style="display:flex;gap:10px;max-width:400px;margin:0 auto">
+      <input type="text" id="setup-wallet-input" placeholder="Account number (e.g. diaspora-001)" style="flex:1">
+      <button class="btn btn-primary" id="btn-setup-save">Get Started</button>
+    </div>
+  </div>
+
+  <!-- Home Panel -->
+  <div class="tab-panel active" id="panel-home">
+
+    <div class="balance-card" id="balance-card">
+      <div class="balance-label">Your balance</div>
+      <div class="balance-amount" id="balance-amount">—</div>
+      <div class="balance-currency">HMZ</div>
+      <div class="balance-footer">
+        <span class="balance-meta" id="balance-wallet-id"></span>
+      </div>
+    </div>
+
+    <!-- Send Calculator -->
+    <div class="send-calculator">
+      <div class="send-calc-label">How much do you want to send?</div>
+      <div class="input-suffix" style="margin-bottom:16px">
+        <input type="number" id="calc-amount" placeholder="0.00" min="1" step="any"
+          style="font-size:1.5rem;font-weight:700;padding:12px 16px">
+        <span class="input-suffix-label" style="font-size:1rem;font-weight:600">GBP</span>
+      </div>
+      <div class="fee-row">
+        <span>Our fee (0.10%)</span>
+        <span id="calc-fee">—</span>
+      </div>
+      <div class="fee-row total">
+        <span>Recipient gets</span>
+        <span id="calc-receive">—</span>
+      </div>
+      <button class="btn btn-primary" id="btn-send-money" style="width:100%;margin-top:16px;padding:14px">
+        Send Now →
+      </button>
+    </div>
+
+    <!-- Cost Comparison -->
+    <div class="cost-compare" id="cost-compare" style="display:none">
+      <div class="cost-compare-title">How we compare</div>
+      <table>
+        <thead>
+          <tr>
+            <th>Method</th>
+            <th>Recipient gets</th>
+            <th>Fee</th>
+            <th>Arrives</th>
+          </tr>
+        </thead>
+        <tbody id="compare-tbody"></tbody>
+      </table>
+      <div class="disclaimer">
+        Competitor fees are estimates based on World Bank Remittance Prices Worldwide (2024) for the UK–Sudan corridor. Actual fees may vary.
+      </div>
+    </div>
+
+    <!-- Recent Activity -->
+    <div class="card">
+      <div class="card-body">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
+          <h3>Recent transfers</h3>
+          <button class="btn btn-ghost btn-sm" data-tab-target="history">View all →</button>
+        </div>
+        <div id="recent-tx"></div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- History Panel -->
+  <div class="tab-panel" id="panel-history">
+    <div class="section-header">
+      <h2>Transfer History</h2>
+      <button class="btn btn-ghost btn-sm" id="btn-load-more" style="display:none">Load more</button>
+    </div>
+    <div id="history-container"></div>
+  </div>
+
+</div>
+
+<!-- Send Money Modal — 3 steps -->
+<div class="modal-overlay" id="modal-send">
+  <div class="modal">
+    <div class="wizard-steps" style="margin-bottom:20px">
+      <div class="wizard-step-dot active" id="dot-1"></div>
+      <div class="wizard-step-dot" id="dot-2"></div>
+      <div class="wizard-step-dot" id="dot-3"></div>
+    </div>
+
+    <!-- Step 1: Amount -->
+    <div class="modal-step active" id="send-step-1">
+      <h3 class="modal-title">How much are you sending?</h3>
+      <div class="form-group">
+        <label>Amount</label>
+        <div class="input-suffix">
+          <input type="number" id="send-amount" placeholder="0.00" min="1" step="any">
+          <span class="input-suffix-label">GBP</span>
+        </div>
+        <p class="hint">Min. £1 &nbsp;·&nbsp; Fee: 0.10% (min £1)</p>
+      </div>
+      <div id="send-fee-preview" style="display:none" class="fee-breakdown">
+        <div class="fee-breakdown-row"><span>You send</span><span id="prev-send">—</span></div>
+        <div class="fee-breakdown-row"><span>Our fee</span><span id="prev-fee">—</span></div>
+        <div class="fee-breakdown-row highlight"><span>Recipient gets</span><span id="prev-recv">—</span></div>
+      </div>
+      <div id="send-step1-alert"></div>
+      <div class="modal-footer">
+        <button class="btn btn-neutral" onclick="closeModal('modal-send')">Cancel</button>
+        <button class="btn btn-primary" id="btn-send-step2">Continue →</button>
+      </div>
+    </div>
+
+    <!-- Step 2: Recipient -->
+    <div class="modal-step" id="send-step-2">
+      <h3 class="modal-title">Who are you sending to?</h3>
+      <div class="form-group">
+        <label>Recipient account number</label>
+        <input type="text" id="send-to" placeholder="e.g. relative-001">
+        <p class="hint">Your recipient's Hawal Digital account number in Sudan</p>
+      </div>
+      <div class="form-group">
+        <label>What's this for? <span style="color:var(--neutral-500);font-weight:400">(optional)</span></label>
+        <input type="text" id="send-memo" placeholder="e.g. School fees, Rent for April, Emergency" maxlength="140">
+      </div>
+      <div id="send-step2-alert"></div>
+      <div class="modal-footer">
+        <button class="btn btn-neutral" id="btn-send-back2">← Back</button>
+        <button class="btn btn-primary" id="btn-send-step3">Review →</button>
+      </div>
+    </div>
+
+    <!-- Step 3: Review & Confirm -->
+    <div class="modal-step" id="send-step-3">
+      <h3 class="modal-title">Review your transfer</h3>
+      <div class="fee-breakdown">
+        <div class="fee-breakdown-row"><span>You send</span><span id="confirm-send">—</span></div>
+        <div class="fee-breakdown-row"><span>Our fee</span><span id="confirm-fee">—</span></div>
+        <div class="fee-breakdown-row highlight"><span>They receive</span><span id="confirm-recv">—</span></div>
+        <div class="fee-breakdown-row" style="margin-top:8px;padding-top:8px;border-top:1px solid var(--border)">
+          <span>To account</span><span id="confirm-to" class="account-chip">—</span>
+        </div>
+        <div class="fee-breakdown-row" id="confirm-memo-row" style="display:none">
+          <span>Note</span><span id="confirm-memo" style="font-style:italic;color:var(--neutral-600)">—</span>
+        </div>
+      </div>
+      <div class="alert info" style="font-size:.875rem;margin-top:16px">
+        Transfers are processed instantly and cannot be reversed.
+      </div>
+      <div id="send-step3-alert"></div>
+      <div class="modal-footer">
+        <button class="btn btn-neutral" id="btn-send-back3">← Back</button>
+        <button class="btn btn-primary" id="btn-send-confirm">Confirm &amp; Send</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="api.js"></script>
+<script>
+const LS_KEY = 'banka_sender_wallet_id'
+let walletId = loadItem(LS_KEY)
+let txBookmark = ''
+let txRecords = []
+
+document.addEventListener('DOMContentLoaded', () => {
+  initTabs()
+
+  document.querySelectorAll('[data-tab-target]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelector(`.nav-tab[data-tab="${btn.dataset.tabTarget}"]`)?.click()
+    })
+  })
+
+  if (!walletId) {
+    document.getElementById('setup-prompt').style.display = 'block'
+    document.getElementById('balance-card').style.opacity = '0.4'
+  } else {
+    loadDashboard()
+  }
+
+  document.getElementById('btn-setup-save').addEventListener('click', () => {
+    const id = document.getElementById('setup-wallet-input').value.trim()
+    if (!id) return
+    walletId = id
+    saveItem(LS_KEY, id)
+    document.getElementById('setup-prompt').style.display = 'none'
+    document.getElementById('balance-card').style.opacity = '1'
+    loadDashboard()
+  })
+
+  document.getElementById('setup-wallet-input').addEventListener('keydown', e => {
+    if (e.key === 'Enter') document.getElementById('btn-setup-save').click()
+  })
+
+  document.getElementById('calc-amount').addEventListener('input', updateCalc)
+
+  document.getElementById('btn-send-money').addEventListener('click', () => {
+    if (!walletId) return showToast('Please set your account number first.', 'error')
+    const calcVal = document.getElementById('calc-amount').value
+    if (calcVal) document.getElementById('send-amount').value = calcVal
+    showSendStep(1)
+    openModal('modal-send')
+    updateFeePreview()
+  })
+
+  document.getElementById('send-amount').addEventListener('input', updateFeePreview)
+  document.getElementById('btn-send-step2').addEventListener('click', goToStep2)
+  document.getElementById('btn-send-step3').addEventListener('click', goToStep3)
+  document.getElementById('btn-send-confirm').addEventListener('click', confirmSend)
+  document.getElementById('btn-send-back2').addEventListener('click', () => showSendStep(1))
+  document.getElementById('btn-send-back3').addEventListener('click', () => showSendStep(2))
+  document.getElementById('btn-load-more').addEventListener('click', loadHistory)
+
+  document.querySelector('.nav-tab[data-tab="history"]')?.addEventListener('click', () => {
+    if (walletId && txRecords.length === 0) { txBookmark = ''; loadHistory() }
+  })
+})
+
+// ── Cost Comparison ───────────────────────────────────────
+
+const COMPARE_METHODS = [
+  { key: 'hawal',  name: 'Hawal Digital',      feeType: 'pct',  feePct: 0.001,  feeFlat: 1,  minFee: 1, arrival: 'Instant',           note: null,                           hawal: true  },
+  { key: 'wu',     name: 'Western Union',       feeType: 'pct',  feePct: 0.08,   feeFlat: 0,  minFee: 0, arrival: '1–3 business days', note: null,                           hawal: false },
+  { key: 'mg',     name: 'MoneyGram',           feeType: 'pct',  feePct: 0.065,  feeFlat: 0,  minFee: 0, arrival: '1–2 business days', note: null,                           hawal: false },
+  { key: 'swift',  name: 'Bank wire (SWIFT)',   feeType: 'flat', feePct: 0,      feeFlat: 35, minFee: 0, arrival: '3–5 business days', note: null,                           hawal: false },
+  { key: 'hawala', name: 'Hawala (informal)',   feeType: 'pct',  feePct: 0.05,   feeFlat: 0,  minFee: 0, arrival: 'Same day',          note: 'No receipt, no traceability', hawal: false },
+]
+
+function calcMethodFee(method, amount) {
+  if (method.feeType === 'flat') return method.feeFlat
+  return Math.max(method.minFee, Math.ceil(amount * method.feePct))
+}
+
+function updateCompare(amount) {
+  const widget = document.getElementById('cost-compare')
+  const tbody  = document.getElementById('compare-tbody')
+  if (!amount || amount <= 0) { widget.style.display = 'none'; return }
+  widget.style.display = 'block'
+  tbody.innerHTML = COMPARE_METHODS.map(m => {
+    const fee       = calcMethodFee(m, amount)
+    const receives  = Math.max(0, amount - fee)
+    const rowCls    = m.hawal ? 'row-hawal' : ''
+    const badge     = m.hawal ? ' <span class="badge-best">Best value</span>' : ''
+    const noteHtml  = m.note  ? `<div class="method-note">${escHtml(m.note)}</div>` : ''
+    const fmtAmt    = m.hawal ? fmtHMZ : fmtCurrency
+    return `<tr class="${rowCls}">
+      <td>
+        <div class="method-cell">
+          <div>
+            <div class="method-name">${escHtml(m.name)}${badge}</div>
+            ${noteHtml}
+          </div>
+        </div>
+      </td>
+      <td>${fmtAmt(receives)}</td>
+      <td>${fmtAmt(fee)}</td>
+      <td style="white-space:nowrap">${escHtml(m.arrival)}</td>
+    </tr>`
+  }).join('')
+}
+
+function updateCalc() {
+  const amount = Number(document.getElementById('calc-amount').value)
+  if (!amount || amount <= 0) {
+    document.getElementById('calc-fee').textContent = '—'
+    document.getElementById('calc-receive').textContent = '—'
+    updateCompare(0)
+    return
+  }
+  const fee = calcFee(amount)
+  document.getElementById('calc-fee').textContent = fmtHMZ(fee)
+  document.getElementById('calc-receive').textContent = fmtHMZ(amount - fee)
+  updateCompare(amount)
+}
+
+function updateFeePreview() {
+  const amount = Number(document.getElementById('send-amount').value)
+  const preview = document.getElementById('send-fee-preview')
+  if (!amount || amount <= 0) { preview.style.display = 'none'; return }
+  const fee = calcFee(amount)
+  preview.style.display = 'block'
+  document.getElementById('prev-send').textContent = fmtHMZ(amount)
+  document.getElementById('prev-fee').textContent = fmtHMZ(fee)
+  document.getElementById('prev-recv').textContent = fmtHMZ(amount - fee)
+}
+
+async function loadDashboard() {
+  document.getElementById('balance-wallet-id').textContent = 'Account: ' + walletId
+  await loadBalance()
+  await loadRecentTx()
+}
+
+async function loadBalance() {
+  const el = document.getElementById('balance-amount')
+  el.innerHTML = '<span class="skeleton" style="display:inline-block;width:120px;height:2.5rem"></span>'
+  try {
+    const res = await apiFetch('GET', `/wallets/${encodeURIComponent(walletId)}/balance`)
+    if (res.ok) {
+      const bal = typeof res.data === 'object' ? (res.data.result ?? res.data) : res.data
+      el.textContent = fmtHMZ(bal)
+    } else { el.textContent = '—'; showToast(friendlyError(res.data), 'error') }
+  } catch (err) { el.textContent = '—'; showToast(err.message, 'error') }
+}
+
+async function loadRecentTx() {
+  const container = document.getElementById('recent-tx')
+  try {
+    const res = await apiFetch('GET', `/tokens/transactions?walletId=${encodeURIComponent(walletId)}&pageSize=5&bookmark=`)
+    if (res.ok) renderActivityList(container, res.data?.records ?? [], walletId)
+    else container.innerHTML = `<p class="hint">Could not load recent activity.</p>`
+  } catch { container.innerHTML = `<p class="hint">Could not load recent activity.</p>` }
+}
+
+async function loadHistory() {
+  const container = document.getElementById('history-container')
+  try {
+    const res = await apiFetch('GET', `/tokens/transactions?walletId=${encodeURIComponent(walletId)}&pageSize=20&bookmark=${encodeURIComponent(txBookmark)}`)
+    if (res.ok) {
+      const page = res.data?.records ?? []
+      txRecords = txBookmark ? [...txRecords, ...page] : page
+      txBookmark = res.data?.bookmark ?? ''
+      renderTxTable(container, txRecords, walletId, false)
+      document.getElementById('btn-load-more').style.display = (txBookmark && page.length >= 20) ? 'inline-flex' : 'none'
+    } else showToast(friendlyError(res.data), 'error')
+  } catch (err) { showToast(err.message, 'error') }
+}
+
+// ── Send Wizard ───────────────────────────────────────────
+function showSendStep(n) {
+  document.querySelectorAll('.modal-step').forEach(s => s.classList.remove('active'))
+  document.getElementById(`send-step-${n}`).classList.add('active')
+  ;[1,2,3].forEach(i => {
+    const dot = document.getElementById(`dot-${i}`)
+    dot.classList.toggle('active', i === n)
+    dot.classList.toggle('done', i < n)
+  })
+  clearAlert('send-step1-alert')
+  clearAlert('send-step2-alert')
+  clearAlert('send-step3-alert')
+}
+
+function goToStep2() {
+  const amount = document.getElementById('send-amount').value.trim()
+  if (!amount || Number(amount) <= 0) return setAlert('send-step1-alert', 'Please enter a valid amount.', 'error')
+  showSendStep(2)
+}
+
+function goToStep3() {
+  const toId = document.getElementById('send-to').value.trim()
+  if (!toId) return setAlert('send-step2-alert', 'Please enter the recipient account number.', 'error')
+  const amount = Number(document.getElementById('send-amount').value)
+  const fee = calcFee(amount)
+  const memo = document.getElementById('send-memo').value.trim()
+  document.getElementById('confirm-send').textContent = fmtHMZ(amount)
+  document.getElementById('confirm-fee').textContent = fmtHMZ(fee)
+  document.getElementById('confirm-recv').textContent = fmtHMZ(amount - fee)
+  document.getElementById('confirm-to').textContent = toId
+  const memoRow = document.getElementById('confirm-memo-row')
+  if (memo) {
+    document.getElementById('confirm-memo').textContent = memo
+    memoRow.style.display = ''
+  } else {
+    memoRow.style.display = 'none'
+  }
+  showSendStep(3)
+}
+
+async function confirmSend() {
+  const toId = document.getElementById('send-to').value.trim()
+  const amount = document.getElementById('send-amount').value.trim()
+  const memo = document.getElementById('send-memo').value.trim()
+  const btn = document.getElementById('btn-send-confirm')
+  btn.disabled = true
+  btn.innerHTML = '<span class="spinner"></span> Sending…'
+  try {
+    const payload = { fromId: walletId, toId, amount: String(amount) }
+    if (memo) payload.memo = memo
+    const res = await apiFetch('POST', '/tokens/transfer', payload)
+    if (res.ok) {
+      closeModal('modal-send')
+      showToast(`Transfer of ${fmtHMZ(amount)} to ${toId} confirmed.`, 'success')
+      document.getElementById('send-to').value = ''
+      document.getElementById('send-memo').value = ''
+      document.getElementById('send-amount').value = ''
+      document.getElementById('calc-amount').value = ''
+      updateCalc()
+      await loadBalance()
+      txRecords = []; txBookmark = ''; await loadRecentTx()
+    } else setAlert('send-step3-alert', friendlyError(res.data), 'error')
+  } catch (err) { setAlert('send-step3-alert', err.message, 'error') }
+  finally { btn.disabled = false; btn.textContent = 'Confirm & Send' }
+}
+
+function setAlert(id, msg, type) {
+  const el = document.getElementById(id)
+  if (el) el.innerHTML = `<div class="alert ${type}" style="margin-top:12px">${escHtml(msg)}</div>`
+}
+function clearAlert(id) { const el = document.getElementById(id); if (el) el.innerHTML = '' }
+</script>
+</body>
+</html>

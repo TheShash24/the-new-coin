@@ -1,0 +1,409 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Hawal Digital Sudan — My Account</title>
+  <link rel="stylesheet" href="shared.css">
+  <style>
+    :root { --page-primary: var(--green); --page-dark: var(--green-dark); --page-light: var(--green-light); }
+
+    /* ── Marketplace product cards ──────────────────────── */
+    .products-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+      gap: 16px;
+      margin-top: 4px;
+    }
+    .product-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 18px 16px 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .product-name   { font-size: .9375rem; font-weight: 700; color: var(--neutral-900); line-height: 1.3; }
+    .product-vendor { font-size: .75rem; color: var(--neutral-500); }
+    .product-price  { font-size: 1.125rem; font-weight: 700; color: var(--neutral-900); margin-top: 4px; }
+    .product-save   { font-size: .78rem; color: var(--green, #16a34a); margin-top: 1px; }
+    .product-market { font-size: .78rem; color: var(--neutral-500); }
+    .product-actions { display: flex; gap: 8px; margin-top: 10px; }
+    .product-actions .btn { flex: 1; font-size: .78rem; padding: 5px 0; }
+
+    .pill-electronics { background: #dbeafe; color: #1d4ed8; }
+    .pill-groceries   { background: #dcfce7; color: #15803d; }
+    .pill-services    { background: #ede9fe; color: #6d28d9; }
+    .pill-topup       { background: #fef3c7; color: #92400e; }
+    .pill-clothing    { background: #fce7f3; color: #9d174d; }
+    .pill-other       { background: var(--neutral-100); color: var(--neutral-600); }
+  </style>
+</head>
+<body>
+
+<header class="topbar">
+  <div class="topbar-logo">Hawal <span style="color:var(--green)">Digital</span> <span class="logo-sub">Sudan</span></div>
+  <span class="role-badge">🏠 Recipient</span>
+  <a class="btn-logout" href="index.html">← Back</a>
+</header>
+
+<nav class="nav-tabs">
+  <button class="nav-tab active" data-tab="home">Home</button>
+  <button class="nav-tab" data-tab="marketplace">Marketplace</button>
+  <button class="nav-tab" data-tab="history">Transaction History</button>
+</nav>
+
+<div class="page-content" style="max-width:760px">
+
+  <!-- Account Setup Prompt -->
+  <div id="setup-prompt" class="setup-prompt" style="display:none">
+    <h3>Welcome to your Sudan wallet.</h3>
+    <p>Enter your account number to access your funds.</p>
+    <div style="display:flex;gap:10px;max-width:380px;margin:0 auto">
+      <input type="text" id="setup-wallet-input" placeholder="Account number (e.g. relative-001)" style="flex:1">
+      <button class="btn btn-primary" id="btn-setup-save">Get Started</button>
+    </div>
+  </div>
+
+  <!-- Home Panel -->
+  <div class="tab-panel active" id="panel-home">
+
+    <div class="balance-card" id="balance-card">
+      <div class="balance-label">Your balance</div>
+      <div class="balance-amount" id="balance-amount">—</div>
+      <div class="balance-currency">HMZ</div>
+      <div class="balance-footer">
+        <span class="balance-meta" id="balance-wallet-id"></span>
+        <button class="btn btn-lg" id="btn-pay-vendor"
+          style="background:rgba(255,255,255,.2);border:1.5px solid rgba(255,255,255,.4);color:#fff;margin-left:auto">
+          🛒 Pay a Merchant
+        </button>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-body">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
+          <h3>Recent activity</h3>
+          <button class="btn btn-ghost btn-sm" data-tab-target="history">View all →</button>
+        </div>
+        <div id="recent-tx"></div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Marketplace Panel -->
+  <div class="tab-panel" id="panel-marketplace">
+    <div class="section-header">
+      <h2>Marketplace</h2>
+    </div>
+    <div class="products-grid" id="marketplace-grid"></div>
+  </div>
+
+  <!-- History Panel -->
+  <div class="tab-panel" id="panel-history">
+    <div class="section-header">
+      <h2>Transaction History</h2>
+      <button class="btn btn-ghost btn-sm" id="btn-load-more" style="display:none">Load more</button>
+    </div>
+    <div id="history-container"></div>
+  </div>
+
+</div>
+
+<!-- Pay Merchant Modal -->
+<div class="modal-overlay" id="modal-pay">
+  <div class="modal">
+    <div class="wizard-steps" style="margin-bottom:20px">
+      <div class="wizard-step-dot active" id="pdot-1"></div>
+      <div class="wizard-step-dot" id="pdot-2"></div>
+    </div>
+
+    <!-- Step 1: Details -->
+    <div class="modal-step active" id="pay-step-1">
+      <h3 class="modal-title">Pay a Merchant</h3>
+      <p class="modal-subtitle">Send funds to a local merchant for goods or services</p>
+      <div class="form-group">
+        <label>Merchant account number</label>
+        <input type="text" id="pay-to" placeholder="e.g. vendor-001">
+      </div>
+      <div class="form-group">
+        <label>Amount</label>
+        <div class="input-suffix">
+          <input type="number" id="pay-amount" placeholder="0.00" min="1" step="any">
+          <span class="input-suffix-label">HMZ</span>
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Payment note <span style="color:var(--neutral-500);font-weight:400">(optional)</span></label>
+        <input type="text" id="pay-memo" placeholder="e.g. Groceries, Medical, Household supplies" maxlength="140">
+      </div>
+      <div id="pay-step1-alert"></div>
+      <div class="modal-footer">
+        <button class="btn btn-neutral" onclick="closeModal('modal-pay')">Cancel</button>
+        <button class="btn btn-primary" id="btn-pay-review">Review →</button>
+      </div>
+    </div>
+
+    <!-- Step 2: Confirm -->
+    <div class="modal-step" id="pay-step-2">
+      <h3 class="modal-title">Confirm payment</h3>
+      <div class="fee-breakdown">
+        <div class="fee-breakdown-row"><span>From</span><span id="pay-confirm-from" class="account-chip">—</span></div>
+        <div class="fee-breakdown-row"><span>To merchant</span><span id="pay-confirm-to" class="account-chip">—</span></div>
+        <div class="fee-breakdown-row highlight"><span>Amount</span><span id="pay-confirm-amount">—</span></div>
+        <div class="fee-breakdown-row"><span>Fee</span><span id="pay-confirm-fee">—</span></div>
+        <div class="fee-breakdown-row" id="pay-confirm-memo-row" style="display:none">
+          <span>Note</span><span id="pay-confirm-memo" style="font-style:italic;color:var(--neutral-600)">—</span>
+        </div>
+      </div>
+      <div class="alert info" style="font-size:.875rem;margin-top:16px">
+        This payment will be recorded and cannot be reversed.
+      </div>
+      <div id="pay-step2-alert"></div>
+      <div class="modal-footer">
+        <button class="btn btn-neutral" id="btn-pay-back">← Back</button>
+        <button class="btn btn-primary" id="btn-pay-confirm">Make Payment</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="api.js"></script>
+<script>
+const LS_KEY = 'bankb_recipient_wallet_id'
+let walletId = loadItem(LS_KEY)
+let txBookmark = ''
+let txRecords = []
+
+document.addEventListener('DOMContentLoaded', () => {
+  initTabs()
+
+  document.querySelectorAll('[data-tab-target]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelector(`.nav-tab[data-tab="${btn.dataset.tabTarget}"]`)?.click()
+    })
+  })
+
+  if (!walletId) {
+    document.getElementById('setup-prompt').style.display = 'block'
+    document.getElementById('balance-card').style.opacity = '0.4'
+  } else {
+    loadDashboard()
+  }
+
+  document.getElementById('btn-setup-save').addEventListener('click', () => {
+    const id = document.getElementById('setup-wallet-input').value.trim()
+    if (!id) return
+    walletId = id
+    saveItem(LS_KEY, id)
+    document.getElementById('setup-prompt').style.display = 'none'
+    document.getElementById('balance-card').style.opacity = '1'
+    loadDashboard()
+  })
+
+  document.getElementById('setup-wallet-input').addEventListener('keydown', e => {
+    if (e.key === 'Enter') document.getElementById('btn-setup-save').click()
+  })
+
+  document.getElementById('btn-pay-vendor').addEventListener('click', () => {
+    if (!walletId) return showToast('Please set your account number first.', 'error')
+    showPayStep(1)
+    openModal('modal-pay')
+  })
+
+  document.getElementById('btn-pay-review').addEventListener('click', reviewPay)
+  document.getElementById('btn-pay-confirm').addEventListener('click', confirmPay)
+  document.getElementById('btn-pay-back').addEventListener('click', () => showPayStep(1))
+  document.getElementById('btn-load-more').addEventListener('click', loadHistory)
+
+  document.querySelector('.nav-tab[data-tab="history"]')?.addEventListener('click', () => {
+    if (walletId && txRecords.length === 0) { txBookmark = ''; loadHistory() }
+  })
+})
+
+async function loadDashboard() {
+  document.getElementById('balance-wallet-id').textContent = 'Account: ' + walletId
+  await loadBalance()
+  await loadRecentTx()
+}
+
+async function loadBalance() {
+  const el = document.getElementById('balance-amount')
+  el.innerHTML = '<span class="skeleton" style="display:inline-block;width:120px;height:2.5rem"></span>'
+  try {
+    const res = await apiFetch('GET', `/wallets/${encodeURIComponent(walletId)}/balance`)
+    if (res.ok) {
+      const bal = typeof res.data === 'object' ? (res.data.result ?? res.data) : res.data
+      el.textContent = fmtHMZ(bal)
+    } else { el.textContent = '—'; showToast(friendlyError(res.data), 'error') }
+  } catch (err) { el.textContent = '—'; showToast(err.message, 'error') }
+}
+
+async function loadRecentTx() {
+  const container = document.getElementById('recent-tx')
+  try {
+    const res = await apiFetch('GET', `/tokens/transactions?walletId=${encodeURIComponent(walletId)}&pageSize=5&bookmark=`)
+    if (res.ok) renderActivityList(container, res.data?.records ?? [], walletId)
+    else container.innerHTML = `<p class="hint">Could not load recent activity.</p>`
+  } catch { container.innerHTML = `<p class="hint">Could not load recent activity.</p>` }
+}
+
+async function loadHistory() {
+  const container = document.getElementById('history-container')
+  try {
+    const res = await apiFetch('GET', `/tokens/transactions?walletId=${encodeURIComponent(walletId)}&pageSize=20&bookmark=${encodeURIComponent(txBookmark)}`)
+    if (res.ok) {
+      const page = res.data?.records ?? []
+      txRecords = txBookmark ? [...txRecords, ...page] : page
+      txBookmark = res.data?.bookmark ?? ''
+      renderTxTable(container, txRecords, walletId, false)
+      document.getElementById('btn-load-more').style.display = (txBookmark && page.length >= 20) ? 'inline-flex' : 'none'
+    } else showToast(friendlyError(res.data), 'error')
+  } catch (err) { showToast(err.message, 'error') }
+}
+
+function showPayStep(n) {
+  document.querySelectorAll('.modal-step').forEach(s => s.classList.remove('active'))
+  document.getElementById(`pay-step-${n}`).classList.add('active')
+  ;[1,2].forEach(i => {
+    const dot = document.getElementById(`pdot-${i}`)
+    dot.classList.toggle('active', i === n)
+    dot.classList.toggle('done', i < n)
+  })
+  clearAlert('pay-step1-alert')
+  clearAlert('pay-step2-alert')
+}
+
+function reviewPay() {
+  const toId = document.getElementById('pay-to').value.trim()
+  const amount = document.getElementById('pay-amount').value.trim()
+  if (!toId) return setAlert('pay-step1-alert', 'Please enter a merchant account number.', 'error')
+  if (!amount || Number(amount) <= 0) return setAlert('pay-step1-alert', 'Please enter a valid amount.', 'error')
+  const fee = calcFee(Number(amount))
+  const memo = document.getElementById('pay-memo').value.trim()
+  document.getElementById('pay-confirm-from').textContent = walletId
+  document.getElementById('pay-confirm-to').textContent = toId
+  document.getElementById('pay-confirm-amount').textContent = fmtHMZ(amount)
+  document.getElementById('pay-confirm-fee').textContent = fmtHMZ(fee)
+  const memoRow = document.getElementById('pay-confirm-memo-row')
+  if (memo) {
+    document.getElementById('pay-confirm-memo').textContent = memo
+    memoRow.style.display = ''
+  } else {
+    memoRow.style.display = 'none'
+  }
+  showPayStep(2)
+}
+
+async function confirmPay() {
+  const toId = document.getElementById('pay-to').value.trim()
+  const amount = document.getElementById('pay-amount').value.trim()
+  const memo = document.getElementById('pay-memo').value.trim()
+  const btn = document.getElementById('btn-pay-confirm')
+  btn.disabled = true; btn.innerHTML = '<span class="spinner"></span> Processing…'
+  try {
+    const payload = { fromId: walletId, toId, amount: String(amount) }
+    if (memo) payload.memo = memo
+    const res = await apiFetch('POST', '/tokens/pay', payload)
+    if (res.ok) {
+      closeModal('modal-pay')
+      showToast(`Payment of ${fmtHMZ(amount)} to ${toId} confirmed.`, 'success')
+      document.getElementById('pay-to').value = ''
+      document.getElementById('pay-amount').value = ''
+      document.getElementById('pay-memo').value = ''
+      await loadBalance()
+      txRecords = []; txBookmark = ''; await loadRecentTx()
+    } else setAlert('pay-step2-alert', friendlyError(res.data), 'error')
+  } catch (err) { setAlert('pay-step2-alert', err.message, 'error') }
+  finally { btn.disabled = false; btn.textContent = 'Make Payment' }
+}
+
+function setAlert(id, msg, type) {
+  const el = document.getElementById(id)
+  if (el) el.innerHTML = `<div class="alert ${type}" style="margin-top:12px">${escHtml(msg)}</div>`
+}
+function clearAlert(id) { const el = document.getElementById(id); if (el) el.innerHTML = '' }
+
+// ── Marketplace ───────────────────────────────────────────
+
+const MARKETPLACE_DEMOS = [
+  { id: 'demo-1', name: 'Samsung Galaxy A15',     category: 'Electronics',   price: 180, marketPrice: 220, vendorId: 'vendor-001' },
+  { id: 'demo-2', name: 'Monthly Grocery Bundle', category: 'Groceries',     price: 45,  marketPrice: 55,  vendorId: 'vendor-001' },
+  { id: 'demo-3', name: 'MTN Mobile Top-up 10GB', category: 'Mobile Top-up', price: 12,  marketPrice: 15,  vendorId: 'vendor-001' },
+]
+
+const MKT_CATEGORY_PILL = {
+  'Electronics':  'electronics',
+  'Groceries':    'groceries',
+  'Services':     'services',
+  'Mobile Top-up':'topup',
+  'Clothing':     'clothing',
+  'Other':        'other',
+}
+
+function loadMarketplace() {
+  const grid = document.getElementById('marketplace-grid')
+  let products = []
+
+  for (let i = 0; i < localStorage.length; i++) {
+    const key = localStorage.key(i)
+    if (!key || !key.startsWith('vendor_products_')) continue
+    const vendorId = key.slice('vendor_products_'.length)
+    try {
+      const items = JSON.parse(localStorage.getItem(key))
+      if (Array.isArray(items)) {
+        items.forEach(p => products.push({ ...p, vendorId }))
+      }
+    } catch { /* skip malformed entries */ }
+  }
+
+  if (!products.length) products = MARKETPLACE_DEMOS
+
+  grid.innerHTML = products.map(p => {
+    const pillClass = MKT_CATEGORY_PILL[p.category] ?? 'other'
+    let savingsHtml = ''
+    if (p.marketPrice && Number(p.marketPrice) > Number(p.price)) {
+      const saved = Number(p.marketPrice) - Number(p.price)
+      savingsHtml = `
+        <div class="product-market">Market price: $${Number(p.marketPrice).toLocaleString()}</div>
+        <div class="product-save">You save $${saved.toLocaleString()} compared to market price</div>`
+    }
+    return `
+      <div class="product-card"
+           data-vendor="${escHtml(p.vendorId)}"
+           data-price="${Number(p.price)}"
+           data-name="${escHtml(p.name)}">
+        <span class="pill pill-${pillClass}" style="align-self:flex-start">${escHtml(p.category)}</span>
+        <div class="product-name">${escHtml(p.name)}</div>
+        <div class="product-vendor">Sold by: ${escHtml(truncId(p.vendorId, 20))}</div>
+        <div class="product-price">${Number(p.price).toLocaleString()} <span style="font-size:.8rem;font-weight:400;color:var(--neutral-500)">HMZ</span></div>
+        ${savingsHtml}
+        <div class="product-actions">
+          <button class="btn btn-primary btn-buy">Buy</button>
+        </div>
+      </div>`
+  }).join('')
+
+  grid.querySelectorAll('.btn-buy').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const card = btn.closest('.product-card')
+      const vendorId = card.dataset.vendor
+      const price    = card.dataset.price
+      const name     = card.dataset.name
+      if (!walletId) return showToast('Please set your account number first.', 'error')
+      document.getElementById('pay-to').value     = vendorId
+      document.getElementById('pay-amount').value = price
+      document.getElementById('pay-memo').value   = name
+      showPayStep(1)
+      openModal('modal-pay')
+    })
+  })
+}
+
+document.querySelector('.nav-tab[data-tab="marketplace"]')?.addEventListener('click', loadMarketplace)
+</script>
+</body>
+</html>

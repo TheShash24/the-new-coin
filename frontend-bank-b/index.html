@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Hawal Digital — Sudan</title>
+  <link rel="stylesheet" href="shared.css">
+  <style>
+    body { background: #fff; min-height: 100vh; }
+
+    .landing-topbar {
+      display: flex;
+      align-items: center;
+      padding: 0 32px;
+      height: 60px;
+      border-bottom: 1px solid var(--border);
+      background: #fff;
+    }
+    .landing-logo {
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: var(--neutral-900);
+      letter-spacing: -.3px;
+      flex: 1;
+    }
+    .landing-logo span { color: var(--green); }
+    .org-badge {
+      background: #f0fdf4;
+      border: 1px solid #bbf7d0;
+      border-radius: 20px;
+      color: var(--green-dark);
+      font-size: .75rem;
+      font-weight: 600;
+      padding: 3px 12px;
+    }
+
+    .hero {
+      text-align: center;
+      padding: 72px 24px 48px;
+      max-width: 640px;
+      margin: 0 auto;
+    }
+    .hero-eyebrow {
+      display: inline-block;
+      background: var(--green-light);
+      color: var(--green-dark);
+      font-size: .8125rem;
+      font-weight: 600;
+      border-radius: 20px;
+      padding: 4px 14px;
+      margin-bottom: 20px;
+    }
+    .hero h1 {
+      font-size: 2.5rem;
+      font-weight: 700;
+      line-height: 1.15;
+      color: var(--neutral-900);
+      margin-bottom: 16px;
+    }
+    .hero h1 .accent { color: var(--green); }
+    .hero p {
+      font-size: 1.0625rem;
+      color: var(--neutral-600);
+      margin-bottom: 32px;
+      line-height: 1.6;
+    }
+
+    .trust-chips {
+      display: flex;
+      justify-content: center;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-bottom: 52px;
+    }
+    .trust-chip {
+      background: var(--neutral-50);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      color: var(--neutral-700);
+      font-size: .8125rem;
+      font-weight: 500;
+      padding: 6px 14px;
+    }
+    .trust-chip .chip-icon { margin-right: 5px; }
+
+    .role-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 16px;
+      max-width: 860px;
+      margin: 0 auto;
+      padding: 0 24px 64px;
+    }
+    @media (max-width: 640px) { .role-grid { grid-template-columns: 1fr; } }
+
+    .role-card {
+      background: #fff;
+      border: 1.5px solid var(--border);
+      border-radius: 16px;
+      padding: 28px 24px;
+      text-decoration: none;
+      color: inherit;
+      cursor: pointer;
+      transition: border-color .15s, box-shadow .15s, transform .1s;
+      display: block;
+    }
+    .role-card:hover {
+      border-color: var(--green);
+      box-shadow: 0 4px 20px rgba(0,184,110,.12);
+      transform: translateY(-2px);
+      text-decoration: none;
+    }
+    .role-card.merchant:hover {
+      border-color: var(--amber);
+      box-shadow: 0 4px 20px rgba(245,158,11,.12);
+    }
+    .role-card.admin:hover {
+      border-color: var(--neutral-500);
+      box-shadow: 0 4px 20px rgba(0,0,0,.10);
+    }
+
+    .role-icon { font-size: 1.75rem; margin-bottom: 12px; display: block; }
+    .role-title { font-size: 1rem; font-weight: 700; color: var(--neutral-900); margin-bottom: 4px; }
+    .role-desc { font-size: .875rem; color: var(--neutral-600); line-height: 1.5; margin-bottom: 16px; }
+    .role-cta  { font-size: .8125rem; font-weight: 600; color: var(--green); }
+    .role-card.merchant .role-cta { color: var(--amber-dark); }
+    .role-card.admin    .role-cta { color: var(--neutral-600); }
+
+    .footer-note {
+      text-align: center;
+      color: var(--neutral-400);
+      font-size: .8125rem;
+      padding-bottom: 32px;
+    }
+  </style>
+</head>
+<body>
+
+<div class="landing-topbar">
+  <div class="landing-logo">Hawal <span>Digital</span> — Sudan</div>
+  <span class="org-badge">Bank B · Org2MSP</span>
+</div>
+
+<div class="hero">
+  <span class="hero-eyebrow">Sudan Remittance Platform</span>
+  <h1>Your money from family abroad<br><span class="accent">received, safe &amp; spendable</span></h1>
+  <p>Access funds sent by your family in the UK, pay local merchants directly, or manage your business account — all in one place.</p>
+  <div class="trust-chips">
+    <span class="trust-chip"><span class="chip-icon">💸</span>Instant access</span>
+    <span class="trust-chip"><span class="chip-icon">🛒</span>Pay local merchants</span>
+    <span class="trust-chip"><span class="chip-icon">🔒</span>CBOS regulated</span>
+    <span class="trust-chip"><span class="chip-icon">🇸🇩</span>Sudan-side bank</span>
+  </div>
+</div>
+
+<div class="role-grid">
+
+  <a class="role-card" href="recipient.html">
+    <span class="role-icon">🏠</span>
+    <div class="role-title">Received money from family?</div>
+    <div class="role-desc">Check your balance and pay local merchants directly from your Hawal Digital account.</div>
+    <div class="role-cta">I received money →</div>
+  </a>
+
+  <a class="role-card merchant" href="vendor.html">
+    <span class="role-icon">🏪</span>
+    <div class="role-title">Running a local business?</div>
+    <div class="role-desc">Accept digital payments from customers and request settlement to hard currency via the Central Bank.</div>
+    <div class="role-cta">I'm a merchant →</div>
+  </a>
+
+  <a class="role-card admin" href="admin.html">
+    <span class="role-icon">⚙️</span>
+    <div class="role-title">Bank Staff</div>
+    <div class="role-desc">Onboard recipients and vendors, manage wallet registration and KYC verification for Sudan-side clients.</div>
+    <div class="role-cta">Admin portal →</div>
+  </a>
+
+</div>
+
+<div class="footer-note">Secured by Hyperledger Fabric &nbsp;·&nbsp; Bank B &nbsp;·&nbsp; Org2MSP</div>
+
+</body>
+</html>

@@ -1,0 +1,554 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Hawal Digital Sudan — Business Account</title>
+  <link rel="stylesheet" href="shared.css">
+  <style>
+    :root { --page-primary: var(--amber); --page-dark: var(--amber-dark); --page-light: var(--amber-light); }
+
+    .balance-card { background: linear-gradient(135deg, var(--amber-dark) 0%, var(--amber) 100%); }
+
+    /* ── Product cards ────────────────────────────── */
+    .products-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+      gap: 16px;
+      margin-top: 4px;
+    }
+    .product-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 18px 16px 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .product-name  { font-size: .9375rem; font-weight: 700; color: var(--neutral-900); line-height: 1.3; }
+    .product-price { font-size: 1.125rem; font-weight: 700; color: var(--neutral-900); margin-top: 4px; }
+    .product-save  { font-size: .78rem; color: var(--green, #16a34a); margin-top: 1px; }
+    .product-market{ font-size: .78rem; color: var(--neutral-500); }
+    .product-actions { display: flex; gap: 8px; margin-top: 10px; }
+    .product-actions .btn { flex: 1; font-size: .78rem; padding: 5px 0; }
+
+    .pill-electronics { background: #dbeafe; color: #1d4ed8; }
+    .pill-groceries   { background: #dcfce7; color: #15803d; }
+    .pill-services    { background: #ede9fe; color: #6d28d9; }
+    .pill-topup       { background: #fef3c7; color: #92400e; }
+    .pill-clothing    { background: #fce7f3; color: #9d174d; }
+    .pill-other       { background: var(--neutral-100); color: var(--neutral-600); }
+  </style>
+</head>
+<body>
+
+<header class="topbar">
+  <div class="topbar-logo">Hawal <span style="color:var(--amber)">Digital</span> <span class="logo-sub">Sudan</span></div>
+  <span class="role-badge" style="background:var(--amber-light);color:var(--amber-dark)">🏪 Business Account</span>
+  <a class="btn-logout" href="index.html">← Back</a>
+</header>
+
+<nav class="nav-tabs">
+  <button class="nav-tab active" data-tab="home">Home</button>
+  <button class="nav-tab" data-tab="products">My Products</button>
+  <button class="nav-tab" data-tab="settlements">Settlements</button>
+  <button class="nav-tab" data-tab="history">Transaction History</button>
+</nav>
+
+<div class="page-content" style="max-width:760px">
+
+  <!-- Account Setup Prompt -->
+  <div id="setup-prompt" class="setup-prompt" style="display:none">
+    <h3>Welcome to your Business Account.</h3>
+    <p>Enter your account number to access your balance and request settlements.</p>
+    <div style="display:flex;gap:10px;max-width:400px;margin:0 auto">
+      <input type="text" id="setup-wallet-input" placeholder="Account number (e.g. vendor-001)" style="flex:1">
+      <button class="btn btn-primary" id="btn-setup-save">Get Started</button>
+    </div>
+  </div>
+
+  <!-- Home Panel -->
+  <div class="tab-panel active" id="panel-home">
+
+    <div class="balance-card" id="balance-card">
+      <div class="balance-label">Available Balance</div>
+      <div class="balance-amount" id="balance-amount">—</div>
+      <div class="balance-currency">HMZ</div>
+      <div class="balance-footer">
+        <span class="balance-meta" id="balance-wallet-id"></span>
+        <button class="btn btn-lg" id="btn-request-settlement"
+          style="background:rgba(255,255,255,.2);border:1.5px solid rgba(255,255,255,.4);color:#fff;margin-left:auto">
+          💱 Request Settlement
+        </button>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-body">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
+          <h3>Recent payments received</h3>
+          <button class="btn btn-ghost btn-sm" data-tab-target="history">View all →</button>
+        </div>
+        <div id="recent-tx"></div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Products Panel -->
+  <div class="tab-panel" id="panel-products">
+    <div class="section-header">
+      <h2>My Products</h2>
+      <button class="btn btn-primary btn-sm" id="btn-add-product">+ Add Product</button>
+    </div>
+    <div class="products-grid" id="products-grid"></div>
+  </div>
+
+  <!-- Settlements Panel -->
+  <div class="tab-panel" id="panel-settlements">
+    <div class="section-header">
+      <h2>Settlement Requests</h2>
+      <button class="btn btn-primary btn-sm" id="btn-new-settlement">+ New Request</button>
+    </div>
+    <div id="settlements-container">
+      <div class="empty-state">
+        <div class="empty-icon">📄</div>
+        <p>No settlement requests this session.</p>
+      </div>
+    </div>
+    <p class="note">Showing requests submitted in this session. Previous requests can be viewed in Transaction History.</p>
+  </div>
+
+  <!-- History Panel -->
+  <div class="tab-panel" id="panel-history">
+    <div class="section-header">
+      <h2>Transaction History</h2>
+      <button class="btn btn-ghost btn-sm" id="btn-load-more" style="display:none">Load more</button>
+    </div>
+    <div id="history-container"></div>
+  </div>
+
+</div>
+
+<!-- Add / Edit Product Modal -->
+<div class="modal-overlay" id="modal-product">
+  <div class="modal">
+    <h3 class="modal-title" id="product-modal-title">Add Product</h3>
+    <input type="hidden" id="product-edit-id">
+    <div class="form-group">
+      <label>Product name</label>
+      <input type="text" id="product-name" placeholder="e.g. Samsung Galaxy A15" maxlength="80">
+    </div>
+    <div class="form-group">
+      <label>Category</label>
+      <select id="product-category" style="height:38px;border:1px solid var(--border);border-radius:var(--radius);padding:0 8px;font-size:.875rem;width:100%">
+        <option value="Electronics">Electronics</option>
+        <option value="Groceries">Groceries</option>
+        <option value="Services">Services</option>
+        <option value="Mobile Top-up">Mobile Top-up</option>
+        <option value="Clothing">Clothing</option>
+        <option value="Other">Other</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label>Price (tokens / USD)</label>
+      <div class="input-suffix">
+        <input type="number" id="product-price" placeholder="0" min="1" step="any">
+        <span class="input-suffix-label">USD</span>
+      </div>
+    </div>
+    <div class="form-group">
+      <label>Market comparison price <span style="color:var(--neutral-500);font-weight:400">(optional)</span></label>
+      <div class="input-suffix">
+        <input type="number" id="product-market-price" placeholder="What it costs elsewhere" min="0" step="any">
+        <span class="input-suffix-label">USD</span>
+      </div>
+      <p class="hint">If set, shows customers how much they save by paying with Hawal Digital tokens.</p>
+    </div>
+    <div id="product-modal-alert"></div>
+    <div class="modal-footer">
+      <button class="btn btn-neutral" onclick="closeModal('modal-product')">Cancel</button>
+      <button class="btn btn-primary" id="btn-product-save">Save Product</button>
+    </div>
+  </div>
+</div>
+
+<!-- Request Settlement Modal -->
+<div class="modal-overlay" id="modal-settlement">
+  <div class="modal">
+    <div class="wizard-steps" style="margin-bottom:20px">
+      <div class="wizard-step-dot active" id="sdot-1"></div>
+      <div class="wizard-step-dot" id="sdot-2"></div>
+    </div>
+
+    <!-- Step 1: Details -->
+    <div class="modal-step active" id="settlement-step-1">
+      <h3 class="modal-title">Request Settlement</h3>
+      <p class="modal-subtitle">Submit an invoice to release hard currency from the Central Bank</p>
+      <div class="form-group">
+        <label>Invoice Reference</label>
+        <input type="text" id="settlement-ref" placeholder="e.g. INV-2024-001">
+        <p class="hint">Reference number from your import invoice</p>
+      </div>
+      <div class="form-group">
+        <label>Amount to settle</label>
+        <div class="input-suffix">
+          <input type="number" id="settlement-amount" placeholder="0.00" min="1" step="any">
+          <span class="input-suffix-label">HMZ</span>
+        </div>
+      </div>
+      <div class="alert warning" style="font-size:.875rem">
+        Funds will be <strong>held</strong> while your request is reviewed by the Central Bank.
+      </div>
+      <div id="settlement-step1-alert"></div>
+      <div class="modal-footer">
+        <button class="btn btn-neutral" onclick="closeModal('modal-settlement')">Cancel</button>
+        <button class="btn btn-primary" id="btn-settlement-review">Review →</button>
+      </div>
+    </div>
+
+    <!-- Step 2: Confirm -->
+    <div class="modal-step" id="settlement-step-2">
+      <h3 class="modal-title">Confirm request</h3>
+      <div class="fee-breakdown">
+        <div class="fee-breakdown-row"><span>Business account</span><span id="settle-confirm-vendor" class="account-chip">—</span></div>
+        <div class="fee-breakdown-row highlight"><span>Amount to settle</span><span id="settle-confirm-amount">—</span></div>
+        <div class="fee-breakdown-row"><span>Invoice Reference</span><span id="settle-confirm-ref">—</span></div>
+        <div class="fee-breakdown-row"><span>Approval required</span><span>Central Bank of Sudan</span></div>
+      </div>
+      <div class="alert warning" style="font-size:.875rem;margin-top:16px">
+        Once submitted, funds are locked until the Central Bank approves or declines this request.
+      </div>
+      <div id="settlement-step2-alert"></div>
+      <div class="modal-footer">
+        <button class="btn btn-neutral" id="btn-settlement-back">← Back</button>
+        <button class="btn btn-primary" id="btn-settlement-confirm">Submit Request</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="api.js"></script>
+<script>
+const LS_KEY   = 'bankb_vendor_wallet_id'
+const LS_BURNS = 'bankb_vendor_burn_ids'
+let walletId = loadItem(LS_KEY)
+let burnIds = loadItem(LS_BURNS, [])
+let txBookmark = ''
+let txRecords = []
+
+document.addEventListener('DOMContentLoaded', () => {
+  initTabs()
+
+  document.querySelectorAll('[data-tab-target]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelector(`.nav-tab[data-tab="${btn.dataset.tabTarget}"]`)?.click()
+    })
+  })
+
+  if (!walletId) {
+    document.getElementById('setup-prompt').style.display = 'block'
+    document.getElementById('balance-card').style.opacity = '0.4'
+  } else {
+    loadDashboard()
+  }
+
+  document.getElementById('btn-setup-save').addEventListener('click', () => {
+    const id = document.getElementById('setup-wallet-input').value.trim()
+    if (!id) return
+    walletId = id
+    saveItem(LS_KEY, id)
+    document.getElementById('setup-prompt').style.display = 'none'
+    document.getElementById('balance-card').style.opacity = '1'
+    loadDashboard()
+  })
+
+  document.getElementById('setup-wallet-input').addEventListener('keydown', e => {
+    if (e.key === 'Enter') document.getElementById('btn-setup-save').click()
+  })
+
+  document.getElementById('btn-request-settlement').addEventListener('click', () => {
+    if (!walletId) return showToast('Please set your account number first.', 'error')
+    showSettlementStep(1)
+    openModal('modal-settlement')
+  })
+  document.getElementById('btn-new-settlement').addEventListener('click', () => {
+    if (!walletId) return showToast('Please set your account number first.', 'error')
+    showSettlementStep(1)
+    openModal('modal-settlement')
+  })
+
+  document.getElementById('btn-settlement-review').addEventListener('click', reviewSettlement)
+  document.getElementById('btn-settlement-confirm').addEventListener('click', confirmSettlement)
+  document.getElementById('btn-settlement-back').addEventListener('click', () => showSettlementStep(1))
+
+  document.querySelector('.nav-tab[data-tab="settlements"]')?.addEventListener('click', () => {
+    if (burnIds.length > 0) loadSettlements()
+  })
+
+  document.querySelector('.nav-tab[data-tab="history"]')?.addEventListener('click', () => {
+    if (walletId && txRecords.length === 0) { txBookmark = ''; loadHistory() }
+  })
+
+  document.getElementById('btn-load-more').addEventListener('click', loadHistory)
+})
+
+async function loadDashboard() {
+  document.getElementById('balance-wallet-id').textContent = 'Account: ' + walletId
+  await loadBalance()
+  await loadRecentTx()
+}
+
+async function loadBalance() {
+  const el = document.getElementById('balance-amount')
+  el.innerHTML = '<span class="skeleton" style="display:inline-block;width:120px;height:2.5rem"></span>'
+  try {
+    const res = await apiFetch('GET', `/wallets/${encodeURIComponent(walletId)}/balance`)
+    if (res.ok) {
+      const bal = typeof res.data === 'object' ? (res.data.result ?? res.data) : res.data
+      el.textContent = fmtHMZ(bal)
+    } else { el.textContent = '—'; showToast(friendlyError(res.data), 'error') }
+  } catch (err) { el.textContent = '—'; showToast(err.message, 'error') }
+}
+
+async function loadRecentTx() {
+  const container = document.getElementById('recent-tx')
+  try {
+    const res = await apiFetch('GET', `/tokens/transactions?walletId=${encodeURIComponent(walletId)}&pageSize=5&bookmark=`)
+    if (res.ok) renderActivityList(container, res.data?.records ?? [], walletId)
+    else container.innerHTML = `<p class="hint">Could not load recent activity.</p>`
+  } catch { container.innerHTML = `<p class="hint">Could not load recent activity.</p>` }
+}
+
+async function loadHistory() {
+  const container = document.getElementById('history-container')
+  try {
+    const res = await apiFetch('GET', `/tokens/transactions?walletId=${encodeURIComponent(walletId)}&pageSize=20&bookmark=${encodeURIComponent(txBookmark)}`)
+    if (res.ok) {
+      const page = res.data?.records ?? []
+      txRecords = txBookmark ? [...txRecords, ...page] : page
+      txBookmark = res.data?.bookmark ?? ''
+      renderTxTable(container, txRecords, walletId, false)
+      document.getElementById('btn-load-more').style.display = (txBookmark && page.length >= 20) ? 'inline-flex' : 'none'
+    } else showToast(friendlyError(res.data), 'error')
+  } catch (err) { showToast(err.message, 'error') }
+}
+
+// ── Settlement Requests ───────────────────────────────────
+async function loadSettlements() {
+  const container = document.getElementById('settlements-container')
+  if (!burnIds.length) return
+
+  container.innerHTML = '<p style="color:var(--neutral-400);font-size:.875rem;padding:12px 0">Loading…</p>'
+
+  const results = await Promise.allSettled(
+    burnIds.map(id => apiFetch('GET', `/burns/${encodeURIComponent(id)}`))
+  )
+
+  const requests = results
+    .filter(r => r.status === 'fulfilled' && r.value.ok)
+    .map(r => r.value.data)
+    .filter(Boolean)
+
+  if (!requests.length) {
+    container.innerHTML = `<div class="empty-state"><div class="empty-icon">📄</div><p>No settlement requests found.</p></div>`
+    return
+  }
+
+  const statusMap = { PENDING: 'processing', APPROVED: 'approved', REJECTED: 'declined' }
+  const labelMap  = { PENDING: 'Processing', APPROVED: 'Approved', REJECTED: 'Declined' }
+
+  container.innerHTML = requests.map(req => {
+    const s = (req.status ?? '').toUpperCase()
+    const cls = statusMap[s] ?? s.toLowerCase()
+    const label = labelMap[s] ?? req.status
+    return `
+      <div class="settlement-card ${cls}">
+        <div style="flex:1">
+          <div style="font-size:1.125rem;font-weight:700;margin-bottom:4px">${fmtHMZ(req.amount)}</div>
+          <div style="color:var(--neutral-600);font-size:.8125rem">Invoice Ref: ${escHtml(req.burnRef ?? '—')} &middot; ${fmtDate(req.initiatedAt)}</div>
+        </div>
+        <span class="pill pill-${cls}">${escHtml(label)}</span>
+      </div>`
+  }).join('')
+}
+
+function showSettlementStep(n) {
+  document.querySelectorAll('.modal-step').forEach(s => s.classList.remove('active'))
+  document.getElementById(`settlement-step-${n}`).classList.add('active')
+  ;[1,2].forEach(i => {
+    const dot = document.getElementById(`sdot-${i}`)
+    dot.classList.toggle('active', i === n)
+    dot.classList.toggle('done', i < n)
+  })
+  clearAlert('settlement-step1-alert')
+  clearAlert('settlement-step2-alert')
+}
+
+function reviewSettlement() {
+  const ref = document.getElementById('settlement-ref').value.trim()
+  const amount = document.getElementById('settlement-amount').value.trim()
+  if (!ref) return setAlert('settlement-step1-alert', 'Please enter an invoice reference.', 'error')
+  if (!amount || Number(amount) <= 0) return setAlert('settlement-step1-alert', 'Please enter a valid amount.', 'error')
+  document.getElementById('settle-confirm-vendor').textContent = walletId
+  document.getElementById('settle-confirm-amount').textContent = fmtHMZ(amount)
+  document.getElementById('settle-confirm-ref').textContent = ref
+  showSettlementStep(2)
+}
+
+async function confirmSettlement() {
+  const burnRef = document.getElementById('settlement-ref').value.trim()
+  const amount = document.getElementById('settlement-amount').value.trim()
+  const btn = document.getElementById('btn-settlement-confirm')
+  btn.disabled = true; btn.innerHTML = '<span class="spinner"></span> Submitting…'
+  try {
+    const res = await apiFetch('POST', '/burns', { vendorId: walletId, amount: String(amount), burnRef })
+    if (res.ok) {
+      const txId = res.data?.txId ?? res.data?.id ?? res.data?.result
+      if (txId && typeof txId === 'string' && txId.length > 8) {
+        burnIds = [...burnIds, txId]
+        saveItem(LS_BURNS, burnIds)
+      }
+      closeModal('modal-settlement')
+      showToast(`Settlement request submitted. ${fmtHMZ(amount)} held pending Central Bank review.`, 'success')
+      document.getElementById('settlement-ref').value = ''
+      document.getElementById('settlement-amount').value = ''
+      await loadBalance()
+      txRecords = []; txBookmark = ''; await loadRecentTx()
+    } else setAlert('settlement-step2-alert', friendlyError(res.data), 'error')
+  } catch (err) { setAlert('settlement-step2-alert', err.message, 'error') }
+  finally { btn.disabled = false; btn.textContent = 'Submit Request' }
+}
+
+function setAlert(id, msg, type) {
+  const el = document.getElementById(id)
+  if (el) el.innerHTML = `<div class="alert ${type}" style="margin-top:12px">${escHtml(msg)}</div>`
+}
+function clearAlert(id) { const el = document.getElementById(id); if (el) el.innerHTML = '' }
+
+// ── My Products ───────────────────────────────────────────
+
+const DEMO_PRODUCTS = [
+  { id: 'demo-1', name: 'Samsung Galaxy A15',     category: 'Electronics',   price: 180, marketPrice: 220 },
+  { id: 'demo-2', name: 'Monthly Grocery Bundle', category: 'Groceries',     price: 45,  marketPrice: 55  },
+  { id: 'demo-3', name: 'MTN Mobile Top-up 10GB', category: 'Mobile Top-up', price: 12,  marketPrice: 15  },
+]
+
+const CATEGORY_PILL = {
+  'Electronics':  'electronics',
+  'Groceries':    'groceries',
+  'Services':     'services',
+  'Mobile Top-up':'topup',
+  'Clothing':     'clothing',
+  'Other':        'other',
+}
+
+function productsKey() { return `vendor_products_${walletId}` }
+
+function loadProducts() {
+  if (!walletId) return
+  let products = loadItem(productsKey())
+  if (!products || !Array.isArray(products) || products.length === 0) {
+    products = DEMO_PRODUCTS
+    saveItem(productsKey(), products)
+  }
+  renderProducts(products)
+}
+
+function renderProducts(products) {
+  const grid = document.getElementById('products-grid')
+  if (!products || !products.length) {
+    grid.innerHTML = `<div class="empty-state" style="grid-column:1/-1"><div class="empty-icon">📦</div><p>No products yet. Add your first product.</p></div>`
+    return
+  }
+  grid.innerHTML = products.map(p => {
+    const pillClass = CATEGORY_PILL[p.category] ?? 'other'
+    const priceStr = `$${Number(p.price).toLocaleString()}`
+    let savingsHtml = ''
+    if (p.marketPrice && Number(p.marketPrice) > Number(p.price)) {
+      const saved = Number(p.marketPrice) - Number(p.price)
+      const pct   = Math.round(saved / Number(p.marketPrice) * 100)
+      savingsHtml = `
+        <div class="product-market">Market price: $${Number(p.marketPrice).toLocaleString()}</div>
+        <div class="product-save">Save $${saved.toLocaleString()} (${pct}% less)</div>`
+    }
+    return `
+      <div class="product-card">
+        <span class="pill pill-${pillClass}" style="align-self:flex-start">${escHtml(p.category)}</span>
+        <div class="product-name">${escHtml(p.name)}</div>
+        <div class="product-price">${priceStr} <span style="font-size:.8rem;font-weight:400;color:var(--neutral-500)">HMZ</span></div>
+        ${savingsHtml}
+        <div class="product-actions">
+          <button class="btn btn-neutral" onclick="openEditProduct('${escHtml(p.id)}')">Edit</button>
+          <button class="btn" style="background:var(--error-bg);color:var(--error-text)" onclick="removeProduct('${escHtml(p.id)}')">Remove</button>
+        </div>
+      </div>`
+  }).join('')
+}
+
+function openAddProduct() {
+  document.getElementById('product-modal-title').textContent = 'Add Product'
+  document.getElementById('product-edit-id').value = ''
+  document.getElementById('product-name').value = ''
+  document.getElementById('product-category').value = 'Electronics'
+  document.getElementById('product-price').value = ''
+  document.getElementById('product-market-price').value = ''
+  clearAlert('product-modal-alert')
+  openModal('modal-product')
+}
+
+function openEditProduct(id) {
+  const products = loadItem(productsKey()) ?? []
+  const p = products.find(x => x.id === id)
+  if (!p) return
+  document.getElementById('product-modal-title').textContent = 'Edit Product'
+  document.getElementById('product-edit-id').value = p.id
+  document.getElementById('product-name').value = p.name
+  document.getElementById('product-category').value = p.category
+  document.getElementById('product-price').value = p.price
+  document.getElementById('product-market-price').value = p.marketPrice ?? ''
+  clearAlert('product-modal-alert')
+  openModal('modal-product')
+}
+
+function saveProduct() {
+  const name        = document.getElementById('product-name').value.trim()
+  const category    = document.getElementById('product-category').value
+  const price       = parseFloat(document.getElementById('product-price').value)
+  const marketPrice = parseFloat(document.getElementById('product-market-price').value) || null
+  const editId      = document.getElementById('product-edit-id').value
+
+  if (!name)               return setAlert('product-modal-alert', 'Product name is required.', 'error')
+  if (!price || price <= 0) return setAlert('product-modal-alert', 'Please enter a valid price.', 'error')
+
+  let products = loadItem(productsKey()) ?? []
+  if (editId) {
+    products = products.map(p => p.id === editId ? { ...p, name, category, price, marketPrice } : p)
+  } else {
+    products.push({ id: `prod-${Date.now()}`, name, category, price, marketPrice })
+  }
+  saveItem(productsKey(), products)
+  closeModal('modal-product')
+  renderProducts(products)
+  showToast(editId ? 'Product updated.' : 'Product added.', 'success')
+}
+
+function removeProduct(id) {
+  let products = loadItem(productsKey()) ?? []
+  products = products.filter(p => p.id !== id)
+  saveItem(productsKey(), products)
+  renderProducts(products)
+  showToast('Product removed.', 'success')
+}
+
+document.getElementById('btn-add-product').addEventListener('click', () => {
+  if (!walletId) return showToast('Please set your account number first.', 'error')
+  openAddProduct()
+})
+document.getElementById('btn-product-save').addEventListener('click', saveProduct)
+
+document.querySelector('.nav-tab[data-tab="products"]')?.addEventListener('click', loadProducts)
+</script>
+</body>
+</html>
