@@ -332,7 +332,7 @@ func TestMintTokens_Valid(t *testing.T) {
 		ID: "w1", Role: RoleDiaspora, Owner: "bank1",
 		Balance: 0, KYCTier: 3, DocType: DocTypeWallet,
 	})
-	err := sc.MintTokens(ctx, "w1", 1000, "DEP-001")
+	err := sc.MintTokens(ctx, "w1", 1000, "DEP-001", "", "", "")
 	if err != nil {
 		t.Fatalf("expected no error, got: %v", err)
 	}
@@ -345,7 +345,7 @@ func TestMintTokens_Valid(t *testing.T) {
 func TestMintTokens_EmptyDepositRef(t *testing.T) {
 	ctx := newCtx(MSPOrg1, "bank1", "tx1")
 	sc := new(SmartContract)
-	err := sc.MintTokens(ctx, "w1", 1000, "")
+	err := sc.MintTokens(ctx, "w1", 1000, "", "", "", "")
 	if err == nil {
 		t.Fatal("expected error for empty depositRef, got nil")
 	}
@@ -358,7 +358,7 @@ func TestMintTokens_WrongMSP(t *testing.T) {
 		ID: "w1", Role: RoleDiaspora, Owner: "bank2",
 		Balance: 0, KYCTier: 3, DocType: DocTypeWallet,
 	})
-	err := sc.MintTokens(ctx, "w1", 1000, "DEP-001")
+	err := sc.MintTokens(ctx, "w1", 1000, "DEP-001", "", "", "")
 	if err == nil {
 		t.Fatal("expected error for Org2MSP caller, got nil")
 	}
@@ -371,10 +371,10 @@ func TestMintTokens_DuplicateDepositRef(t *testing.T) {
 		ID: "w1", Role: RoleDiaspora, Owner: "bank1",
 		Balance: 0, KYCTier: 3, DocType: DocTypeWallet,
 	})
-	if err := sc.MintTokens(ctx, "w1", 1000, "DEP-001"); err != nil {
+	if err := sc.MintTokens(ctx, "w1", 1000, "DEP-001", "", "", ""); err != nil {
 		t.Fatalf("first mint failed: %v", err)
 	}
-	err := sc.MintTokens(ctx, "w1", 1000, "DEP-001")
+	err := sc.MintTokens(ctx, "w1", 1000, "DEP-001", "", "", "")
 	if err == nil {
 		t.Fatal("expected error for duplicate depositRef, got nil")
 	}
@@ -395,7 +395,7 @@ func TestTransfer_Valid(t *testing.T) {
 		ID: "relative1", Role: RoleRelative, Owner: "user2",
 		Balance: 0, KYCTier: 3, DocType: DocTypeWallet,
 	})
-	err := sc.Transfer(ctx, "diaspora1", "relative1", 1000)
+	err := sc.Transfer(ctx, "diaspora1", "relative1", 1000, "")
 	if err != nil {
 		t.Fatalf("expected no error, got: %v", err)
 	}
@@ -421,7 +421,7 @@ func TestTransfer_FrozenSender(t *testing.T) {
 		ID: "relative1", Role: RoleRelative, Owner: "user2",
 		Balance: 0, KYCTier: 3, DocType: DocTypeWallet,
 	})
-	err := sc.Transfer(ctx, "diaspora1", "relative1", 100)
+	err := sc.Transfer(ctx, "diaspora1", "relative1", 100, "")
 	if err == nil {
 		t.Fatal("expected error for frozen sender, got nil")
 	}
@@ -438,7 +438,7 @@ func TestTransfer_FrozenRecipient(t *testing.T) {
 		ID: "relative1", Role: RoleRelative, Owner: "user2",
 		Balance: 0, KYCTier: 3, Frozen: true, DocType: DocTypeWallet,
 	})
-	err := sc.Transfer(ctx, "diaspora1", "relative1", 100)
+	err := sc.Transfer(ctx, "diaspora1", "relative1", 100, "")
 	if err == nil {
 		t.Fatal("expected error for frozen recipient, got nil")
 	}
@@ -456,7 +456,7 @@ func TestTransfer_WrongSenderRole(t *testing.T) {
 		ID: "relative1", Role: RoleRelative, Owner: "user2",
 		Balance: 0, KYCTier: 3, DocType: DocTypeWallet,
 	})
-	err := sc.Transfer(ctx, "rel-as-sender", "relative1", 100)
+	err := sc.Transfer(ctx, "rel-as-sender", "relative1", 100, "")
 	if err == nil {
 		t.Fatal("expected error for wrong sender role, got nil")
 	}
@@ -474,7 +474,7 @@ func TestTransfer_WrongRecipientRole(t *testing.T) {
 		ID: "diaspora2", Role: RoleDiaspora, Owner: "user2",
 		Balance: 0, KYCTier: 3, DocType: DocTypeWallet,
 	})
-	err := sc.Transfer(ctx, "diaspora1", "diaspora2", 100)
+	err := sc.Transfer(ctx, "diaspora1", "diaspora2", 100, "")
 	if err == nil {
 		t.Fatal("expected error for wrong recipient role, got nil")
 	}
@@ -491,7 +491,7 @@ func TestTransfer_InsufficientBalance(t *testing.T) {
 		ID: "relative1", Role: RoleRelative, Owner: "user2",
 		Balance: 0, KYCTier: 3, DocType: DocTypeWallet,
 	})
-	err := sc.Transfer(ctx, "diaspora1", "relative1", 500)
+	err := sc.Transfer(ctx, "diaspora1", "relative1", 500, "")
 	if err == nil {
 		t.Fatal("expected error for insufficient balance, got nil")
 	}
@@ -512,7 +512,7 @@ func TestPayVendor_Valid(t *testing.T) {
 		ID: "vendor1", Role: RoleVendor, Owner: "vendor_owner",
 		Balance: 0, KYCTier: 3, DocType: DocTypeWallet,
 	})
-	err := sc.PayVendor(ctx, "rel1", "vendor1", 1000)
+	err := sc.PayVendor(ctx, "rel1", "vendor1", 1000, "")
 	if err != nil {
 		t.Fatalf("expected no error, got: %v", err)
 	}
@@ -539,7 +539,7 @@ func TestPayVendor_WrongPayerRole(t *testing.T) {
 		ID: "vendor1", Role: RoleVendor, Owner: "vendor_owner",
 		Balance: 0, KYCTier: 3, DocType: DocTypeWallet,
 	})
-	err := sc.PayVendor(ctx, "diaspora1", "vendor1", 100)
+	err := sc.PayVendor(ctx, "diaspora1", "vendor1", 100, "")
 	if err == nil {
 		t.Fatal("expected error for wrong payer role, got nil")
 	}
@@ -795,7 +795,7 @@ func TestTransfer_KYCTier1Exceeded(t *testing.T) {
 		ID: "relative1", Role: RoleRelative, Owner: "user2",
 		Balance: 0, KYCTier: 3, DocType: DocTypeWallet,
 	})
-	err := sc.Transfer(ctx, "diaspora1", "relative1", KYCTier1MaxAmount+1)
+	err := sc.Transfer(ctx, "diaspora1", "relative1", KYCTier1MaxAmount+1, "")
 	if err == nil {
 		t.Fatal("expected error for KYC tier 1 limit exceeded, got nil")
 	}
@@ -808,7 +808,7 @@ func TestTransfer_ToSelf(t *testing.T) {
 		ID: "diaspora1", Role: RoleDiaspora, Owner: "user1",
 		Balance: 2000, KYCTier: 3, DocType: DocTypeWallet,
 	})
-	err := sc.Transfer(ctx, "diaspora1", "diaspora1", 100)
+	err := sc.Transfer(ctx, "diaspora1", "diaspora1", 100, "")
 	if err == nil {
 		t.Fatal("expected error for self-transfer, got nil")
 	}
@@ -821,7 +821,7 @@ func TestPayVendor_ToSelf(t *testing.T) {
 		ID: "rel1", Role: RoleRelative, Owner: "user2",
 		Balance: 2000, KYCTier: 3, DocType: DocTypeWallet,
 	})
-	err := sc.PayVendor(ctx, "rel1", "rel1", 100)
+	err := sc.PayVendor(ctx, "rel1", "rel1", 100, "")
 	if err == nil {
 		t.Fatal("expected error for self-payment, got nil")
 	}
@@ -834,7 +834,7 @@ func TestMintTokens_ToRelativeWallet(t *testing.T) {
 		ID: "rel1", Role: RoleRelative, Owner: "bank1",
 		Balance: 0, KYCTier: 3, DocType: DocTypeWallet,
 	})
-	err := sc.MintTokens(ctx, "rel1", 1000, "DEP-002")
+	err := sc.MintTokens(ctx, "rel1", 1000, "DEP-002", "", "", "")
 	if err == nil {
 		t.Fatal("expected error for minting to RELATIVE wallet, got nil")
 	}
@@ -847,7 +847,7 @@ func TestMintTokens_FrozenWallet(t *testing.T) {
 		ID: "w1", Role: RoleDiaspora, Owner: "bank1",
 		Balance: 0, KYCTier: 3, Frozen: true, DocType: DocTypeWallet,
 	})
-	err := sc.MintTokens(ctx, "w1", 1000, "DEP-003")
+	err := sc.MintTokens(ctx, "w1", 1000, "DEP-003", "", "", "")
 	if err == nil {
 		t.Fatal("expected error for minting to frozen wallet, got nil")
 	}

@@ -29,13 +29,7 @@ func (s *Server) handleMintTokens(w http.ResponseWriter, r *http.Request) {
 		writeError(w, http.StatusBadRequest, "walletId, amount, and depositRef are required")
 		return
 	}
-	var result []byte
-	var ok bool
-	if body.OriginalCurrency != "" {
-		result, ok = submit(w, conn.Contract(), "MintTokens", body.WalletID, body.Amount, body.DepositRef, body.OriginalCurrency, body.OriginalAmount, body.ExchangeRate)
-	} else {
-		result, ok = submit(w, conn.Contract(), "MintTokens", body.WalletID, body.Amount, body.DepositRef)
-	}
+	result, ok := submit(w, conn.Contract(), "MintTokens", body.WalletID, body.Amount, body.DepositRef, body.OriginalCurrency, body.OriginalAmount, body.ExchangeRate)
 	if !ok {
 		return
 	}
@@ -69,13 +63,7 @@ func (s *Server) handleTransfer(w http.ResponseWriter, r *http.Request) {
 		writeError(w, http.StatusBadRequest, "fromId, toId, and amount are required")
 		return
 	}
-	var result []byte
-	var ok bool
-	if body.Memo != "" {
-		result, ok = submit(w, conn.Contract(), "Transfer", body.FromID, body.ToID, body.Amount, body.Memo)
-	} else {
-		result, ok = submit(w, conn.Contract(), "Transfer", body.FromID, body.ToID, body.Amount)
-	}
+	result, ok := submit(w, conn.Contract(), "Transfer", body.FromID, body.ToID, body.Amount, body.Memo)
 	if !ok {
 		return
 	}
@@ -105,13 +93,7 @@ func (s *Server) handlePayVendor(w http.ResponseWriter, r *http.Request) {
 		writeError(w, http.StatusBadRequest, "fromId, toId, and amount are required")
 		return
 	}
-	var result []byte
-	var ok bool
-	if body.Memo != "" {
-		result, ok = submit(w, conn.Contract(), "PayVendor", body.FromID, body.ToID, body.Amount, body.Memo)
-	} else {
-		result, ok = submit(w, conn.Contract(), "PayVendor", body.FromID, body.ToID, body.Amount)
-	}
+	result, ok := submit(w, conn.Contract(), "PayVendor", body.FromID, body.ToID, body.Amount, body.Memo)
 	if !ok {
 		return
 	}

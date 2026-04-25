@@ -437,9 +437,8 @@ func (s *SmartContract) RegisterWallet(ctx contractapi.TransactionContextInterfa
 // Restricted to Org1MSP (Bank A) — all deposits originate on the diaspora side.
 // C2 fix: depositRef uniqueness enforced via composite key to prevent double-minting.
 // amount is the USD-equivalent token amount (conversion happens at the API layer).
-// opts is an optional triplet: [originalCurrency, originalAmount, exchangeRate].
-// If omitted or originalCurrency is empty, originalCurrency defaults to "USD".
-func (s *SmartContract) MintTokens(ctx contractapi.TransactionContextInterface, walletID string, amount int64, depositRef string, opts ...string) error {
+// If originalCurrency is empty, it defaults to "USD" with no conversion metadata.
+func (s *SmartContract) MintTokens(ctx contractapi.TransactionContextInterface, walletID string, amount int64, depositRef string, originalCurrency string, originalAmount string, exchangeRate string) error {
 	// L1: empty string validation
 	if walletID == "" {
 		return fmt.Errorf("walletID cannot be empty")
@@ -490,21 +489,13 @@ func (s *SmartContract) MintTokens(ctx contractapi.TransactionContextInterface, 
 	if err := updateTotalSupply(ctx, amount); err != nil {
 		return err
 	}
-	var originalCurrency string
-	var originalAmount int64
-	var exchangeRate string
-	if len(opts) >= 1 {
-		originalCurrency = opts[0]
-	}
-	if len(opts) >= 2 {
-		v, err := strconv.ParseInt(opts[1], 10, 64)
+	var origAmountInt int64
+	if originalAmount != "" {
+		v, err := strconv.ParseInt(originalAmount, 10, 64)
 		if err != nil {
-			return fmt.Errorf("invalid originalAmount %q: %w", opts[1], err)
+			return fmt.Errorf("invalid originalAmount %q: %w", originalAmount, err)
 		}
-		originalAmount = v
-	}
-	if len(opts) >= 3 {
-		exchangeRate = opts[2]
+		origAmountInt = v
 	}
 	if originalCurrency == "" {
 		originalCurrency = "USD"
@@ -517,7 +508,7 @@ func (s *SmartContract) MintTokens(ctx contractapi.TransactionContextInterface, 
 		ExchangeRate:     exchangeRate,
 		Fee:              0,
 		From:             "",
-		OriginalAmount:   originalAmount,
+		OriginalAmount:   origAmountInt,
 		OriginalCurrency: originalCurrency,
 		Participants:     []string{walletID},
 		Timestamp:        ts,
@@ -536,8 +527,8 @@ func (s *SmartContract) MintTokens(ctx contractapi.TransactionContextInterface, 
 // C4 fix: enforces role constraints — sender must be DIASPORA, recipient must be RELATIVE.
 // M1 fix: recipient frozen status checked.
 // M3 fix: integer overflow guard on amount + fee.
-// opts[0]: optional memo string stored on the transaction record for audit purposes.
-func (s *SmartContract) Transfer(ctx contractapi.TransactionContextInterface, fromID string, toID string, amount int64, opts ...string) error {
+// memo is an optional audit note stored on the transaction record; pass empty string if not needed.
+func (s *SmartContract) Transfer(ctx contractapi.TransactionContextInterface, fromID string, toID string, amount int64, memo string) error {
 	// L1: empty string validation
 	if fromID == "" {
 		return fmt.Errorf("fromID cannot be empty")
@@ -619,10 +610,6 @@ func (s *SmartContract) Transfer(ctx contractapi.TransactionContextInterface, fr
 	if err := saveWallet(ctx, toWallet); err != nil {
 		return err
 	}
-	var memo string
-	if len(opts) >= 1 {
-		memo = opts[0]
-	}
 	txID := ctx.GetStub().GetTxID()
 	// Bug 2 fix: fee stored as FeeEntry composite key, not direct credit to CBOS wallet
 	if err := saveFeeEntry(ctx, txID, fee, fromID, ts); err != nil {
@@ -650,8 +637,8 @@ func (s *SmartContract) Transfer(ctx contractapi.TransactionContextInterface, fr
 // PayVendor transfers tokens from a RELATIVE wallet to a VENDOR wallet.
 // C5 fix: enforces RELATIVE role on payer.
 // KYC tier limits: Tier 1 ≤ 1,000 tokens, Tier 2 ≤ 10,000 tokens, Tier 3 unlimited.
-// opts[0]: optional memo string stored on the transaction record for audit purposes.
-func (s *SmartContract) PayVendor(ctx contractapi.TransactionContextInterface, fromID string, toID string, amount int64, opts ...string) error {
+// memo is an optional audit note stored on the transaction record; pass empty string if not needed.
+func (s *SmartContract) PayVendor(ctx contractapi.TransactionContextInterface, fromID string, toID string, amount int64, memo string) error {
 	// L1: empty string validation
 	if fromID == "" {
 		return fmt.Errorf("fromID cannot be empty")
@@ -731,10 +718,6 @@ func (s *SmartContract) PayVendor(ctx contractapi.TransactionContextInterface, f
 	}
 	if err := saveWallet(ctx, toWallet); err != nil {
 		return err
-	}
-	var memo string
-	if len(opts) >= 1 {
-		memo = opts[0]
 	}
 	txID := ctx.GetStub().GetTxID()
 	if err := saveFeeEntry(ctx, txID, fee, fromID, ts); err != nil {
